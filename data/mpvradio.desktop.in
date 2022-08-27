@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+_Name=mpvradio
+_Comment=Client application fo mpv
+Comment[ja]=mpvを使ったラジオ
+Exec=mpvradio
+Icon=mpvradio
+Terminal=false
+Type=Application
+Categories=GTK;AudioVideo;Audio;
