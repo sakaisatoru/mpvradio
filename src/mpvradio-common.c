@@ -22,6 +22,8 @@
 
 extern XAppStatusIcon *appindicator;
 
+extern void mpvradio_stop_mpv (void);
+
 /*
  * シグナルコールバック用の汎用ラッパ
  */
@@ -49,7 +51,7 @@ void mpvradio_common_play (void)
  */
 void mpvradio_common_stop (void)
 {
-    system ("killall mpv");
+    mpvradio_stop_mpv ();
     xapp_status_icon_set_label (appindicator, "");
 }
 

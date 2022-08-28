@@ -95,6 +95,19 @@ void mpvradio_eventmonior_wakeup (void)
     }
 }
 
+
+/*
+ *  実行中の mpv を止める
+ */
+static pid_t current_mpv = 0;
+void mpvradio_stop_mpv (void)
+{
+    if (current_mpv) {
+        g_message ("kill %d", current_mpv);
+        kill (current_mpv, SIGTERM);
+    }
+}
+
 /*
  * 選局ボタンのコールバック
  */
@@ -102,9 +115,16 @@ static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
                                                 gpointer data)
 {
     pid_t pid, pid2;
+
     int status;
+    int pfd[2];
 
     char *url = mpvradio_stationbutton_get_uri (btn);
+
+    if (pipe(pfd) == -1) {
+        g_error ("パイプの作成に失敗");
+        return;
+    }
 
     pid = fork ();
     if (pid == -1) {
@@ -121,16 +141,26 @@ static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
             // 孫プロセス
             // 呼び出し元のこのスレッド以外は引き継がない事に注意。
             //~ xapp_status_icon_set_label (appindicator, gtk_button_get_label (btn));
-            system ("killall mpv");
+            mpvradio_stop_mpv ();
             execlp ("mpv", "mpv", url, (char*)NULL);
         }
         else {
-            // 子プロセスはすぐに終了、孫プロセスは孤児となる
+            // 子プロセスは親プロセスにpipeで pidを返してすぐに終了、
+            // 孫プロセスは孤児となる
+            close (pfd[0]);
+            write (pfd[1], &pid2, sizeof(pid2));
+            close (pfd[1]);
+            g_message ( "pid send : %d", pid2);
             exit (0);
         }
-    } else {
+    }
+    else {
         // 親プロセス
+        close (pfd[1]);
+        read (pfd[0], &current_mpv, sizeof(current_mpv));
+        close (pfd[0]);
         waitpid (pid, &status, 0);
+        g_message ("pid recv : %d", current_mpv);
     }
 }
 
@@ -180,7 +210,7 @@ void mpvradio_read_playlist (void)
                 if (pos[i] == '\n') pos[i] = '\0';
                 station = g_path_get_basename (pos);
                 url = g_strdup (pos);
-                g_message ("path : %s   station : %s\n", url, station);
+                g_message ("path : %s   station : %s", url, station);
                 g_hash_table_insert (playlist_table, station, url);
             }
         }
@@ -495,6 +525,7 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     g_object_unref (appindicator);
 
     g_hash_table_destroy (playlist_table);
+    mpvradio_stop_mpv ();
     g_message ("shutdown now.");
 }
 
