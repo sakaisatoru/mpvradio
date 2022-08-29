@@ -1,7 +1,7 @@
 /*
  * mpvradio.h
  *
- * Copyright 2019 sakai <endeavor2wako@gmail.com>
+ * Copyright 2022 sakai <endeavor2wako@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,20 +26,10 @@
 #include "gdk/gdkkeysyms.h"
 #include "libnotify/notification.h"
 #include "libnotify/notify.h"
-#include "mpd/client.h"
 
 #ifndef mpvradio_H
 #define mpvradio_H
 
 #define mpvradioICON   "media-playback-start-symbolic"
 
-struct serverinfo {
-            gchar *id;
-            gchar *name;
-            gchar *ip4;
-            unsigned port;
-            gboolean ua;
-            gchar *password;
-            gchar *music_directory;
-};
 #endif

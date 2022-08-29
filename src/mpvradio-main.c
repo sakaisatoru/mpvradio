@@ -1,7 +1,7 @@
 /*
  * mpvradio-main.c
  *
- * Copyright 2021 phous <endeavor2wako@gmail.com>
+ * Copyright 2022 phous <endeavor2wako@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,6 @@ GtkWindow *radikopanel;
 GtkWindow *selectergrid;
 XAppStatusIcon *appindicator;       // LinuxMint 専用
 
-static struct serverinfo svinfo;
 static GKeyFile *kconf;
 
 
@@ -73,28 +72,12 @@ extern void mpvradio_adduri_quicktune (GtkWindow *oya);
 
 /* mpvradio-config.c */
 extern void detach_config_file (GKeyFile *);
-extern void save_config_file (GKeyFile *, struct serverinfo *);
-extern GKeyFile * load_config_file (struct serverinfo *);
+extern void save_config_file (GKeyFile *);
+extern GKeyFile *load_config_file (void);
 extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 
 /* mpvradio-notify.c */
 extern void mpvradio_notify_currentsong (void);
-
-
-
-
-/*
- * イベントモニタルーチンが動いていなければ別スレッドとして起動する
- */
-void mpvradio_eventmonior_wakeup (void)
-{
-    if (mpvradio_recv_dead == TRUE) {
-        mpvradio_recv_dead = FALSE;
-        //~ g_thread_new ("notify", mpvradio_eventmonitor_gt, NULL);
-        g_message ("event monitor wake up.");
-    }
-}
-
 
 /*
  *  実行中の mpv を止める
@@ -181,41 +164,53 @@ static void radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
     }
 }
 
-
 /*
  * playlist の内容をハッシュテーブルに格納する
  */
-GHashTable *playlist_table;
-gchar *playlistfile = "/var/lib/mpd/playlists/00_radiko.m3u";
+static GHashTable *playlist_table;
 void mpvradio_read_playlist (void)
 {
-    gchar buf[256], *pos, *station, *url;
+    gchar buf[256], *pos, *station, *url, **playlist, **pl, *fn;
     int i;
 
+    playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-    FILE *fp = fopen (playlistfile, "r");
-    while (!feof(fp)) {
-        if (fgets (buf, sizeof(buf)-1, fp) == NULL) {
-            if (ferror(fp)) {
-                break;
+    pl = playlist;
+    while (*pl != NULL) {
+        fn = g_key_file_get_value (kconf, "playlist", *pl, NULL);
+        g_message (fn);
+        FILE *fp = fopen (fn, "r");
+        if (fp != NULL) {
+            while (!feof(fp)) {
+                if (fgets (buf, sizeof(buf)-1, fp) == NULL) {
+                    if (ferror(fp)) {
+                        break;
+                    }
+                }
+                pos = g_strchug (buf);
+                if (pos[0] != '#') {
+                    // コメント行は飛ばす
+                    i = strlen(pos) - 1;
+                    // 空行は飛ばす
+                    if (i > 0) {
+                        if (pos[i] == '\n') pos[i] = '\0';
+                        station = g_path_get_basename (pos);
+                        url = g_strdup (pos);
+                        g_message ("path : %s   station : %s", url, station);
+                        g_hash_table_insert (playlist_table, station, url);
+                    }
+                }
             }
+            fclose (fp);
         }
-        pos = g_strchug (buf);
-        if (pos[0] != '#') {
-            // コメント行は飛ばす
-            i = strlen(pos) - 1;
-            // 空行は飛ばす
-            if (i > 0) {
-                if (pos[i] == '\n') pos[i] = '\0';
-                station = g_path_get_basename (pos);
-                url = g_strdup (pos);
-                g_message ("path : %s   station : %s", url, station);
-                g_hash_table_insert (playlist_table, station, url);
-            }
+        else {
+            g_message ("file not found. %s", *pl);
         }
+        g_free (fn);
+        pl++;
     }
-    fclose (fp);
+    g_strfreev (playlist);
 }
 
 
@@ -326,8 +321,8 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     gtk_header_bar_set_has_subtitle (GTK_HEADER_BAR (header), TRUE);
     gtk_window_set_titlebar (GTK_WINDOW (window), header);
     //~ gtk_header_bar_pack_start (GTK_HEADER_BAR (header), menubtn);
-    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
-    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
+    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
+    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), stopbtn);
 
 
@@ -370,15 +365,6 @@ quicktune_activated (GSimpleAction *action,
     }
 }
 
-static void
-preferences_activated (GSimpleAction *action,
-                       GVariant      *parameter,
-                       gpointer       app)
-{
-    XAppPreferencesWindow *pre_ui;
-    pre_ui = mpvradio_config_prefernces_ui ();
-    gtk_widget_show_all (pre_ui);
-}
 
 static void
 about_activated (GSimpleAction *action,
@@ -429,7 +415,6 @@ static GActionEntry app_entries[] =
 {
   //~ { "disconnect", disconnect_activated, NULL, NULL, NULL },
   //~ { "quicktune", quicktune_activated, NULL, NULL, NULL },
-  //~ { "preferences", preferences_activated, NULL, NULL, NULL },
   { "about", about_activated, NULL, NULL, NULL },
   { "quit", quit_activated, NULL, NULL, NULL }
 };
@@ -500,7 +485,7 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
     mpvradio_connection_in = FALSE;
 
     /* 設定ファイル */
-    kconf = load_config_file (&svinfo);
+    kconf = load_config_file ();
 
     /* ラジオ局一覧 (playlist)の読み込み */
     mpvradio_read_playlist ();
@@ -509,23 +494,24 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
 static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 {
     GList *windows;
+
+    mpvradio_stop_mpv ();
+
+    g_object_unref (appindicator);
+
     windows = gtk_application_get_windows (app);
     while (windows != NULL && GTK_IS_WINDOW(windows->data)) {
         gtk_widget_destroy (windows->data);
         windows = g_list_next(windows);
     }
 
-    save_config_file (kconf, &svinfo);
-    g_free (svinfo.id);
-
+    save_config_file (kconf);
 
     g_object_unref (notifi);
     notify_uninit ();
     detach_config_file (kconf);
-    g_object_unref (appindicator);
 
     g_hash_table_destroy (playlist_table);
-    mpvradio_stop_mpv ();
     g_message ("shutdown now.");
 }
 
@@ -535,7 +521,6 @@ static void mpvradio_activate_cb (GtkApplication *app, gpointer data)
     windows = gtk_application_get_windows (app);
     if (windows == NULL) {
         radikopanel = mpvradio_radiopanel (app);
-        //~ mpvradio_eventmonior_wakeup ();
         //~ mpvradio_notify_currentsong ();
     }
     gtk_widget_show_all (radikopanel);

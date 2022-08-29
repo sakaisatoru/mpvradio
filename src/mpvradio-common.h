@@ -1,7 +1,7 @@
 /*
  * mpvradio-common.h
  *
- * Copyright 2021 sakai satoru <endeavor2wako@gmail.com>
+ * Copyright 2022 sakai satoru <endeavor2wako@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

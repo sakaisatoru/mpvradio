@@ -1,7 +1,7 @@
 /*
  * mpvradio_notify.c
  *
- * Copyright 2019 sakai <endeavor2wako@gmail.com>
+ * Copyright 2022 sakai <endeavor2wako@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@
 #include "gdk/gdkkeysyms.h"
 #include "libnotify/notification.h"
 #include "libnotify/notify.h"
-#include "mpd/client.h"
 
 #include "libxapp/xapp-status-icon.h"
 
@@ -45,7 +44,6 @@
 /* mpvradio-main.c */
 extern XAppStatusIcon *appindicator;
 extern NotifyNotification *notifi;      // デスクトップ通知
-//~ extern void mpvradio_eventmonior_wakeup (void);
 
 /*
  * notify_notification が & を受け付けないのでエスケープする
