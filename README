@@ -1,0 +1,5 @@
+master
+mpv を都度起動、終了する
+
+testing
+ipcによる通信で制御する
