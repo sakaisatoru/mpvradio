@@ -1,4 +1,3 @@
-testing
 ipcにてmpvを制御する
 mpv --idle --input-ipc-server=/run/user/1000/mpvsocket --no-video &
 
