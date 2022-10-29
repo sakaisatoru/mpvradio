@@ -12,7 +12,10 @@ mpvradio_SOURCES = \
 	mpvradio-notify.c	\
 	mpvradio.h			\
 	mpvradio-main.c	\
-	mpvradio-common.c
+	mpvradio-common.c	\
+	mpvradio-ipc.c	\
+	mpvradio-ipc.h
+
 
 mpvradio_CFLAGS  =  $(GTK_CFLAGS) $(NOTIFY_CFLAGS) $(XAPP_CFLAGS)
 mpvradio_LDADD   =  $(INTLLIBS) $(GTK_LIBS) $(NOTIFY_LIBS) $(XAPP_LIBS)

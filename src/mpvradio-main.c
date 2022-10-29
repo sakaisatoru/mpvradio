@@ -35,6 +35,7 @@
 
 #include "glib/gi18n.h"
 #include "gtk/gtk.h"
+#include "glib.h"
 #include "gdk/gdkkeysyms.h"
 #include "libnotify/notification.h"
 #include "libnotify/notify.h"
@@ -82,13 +83,15 @@ extern void mpvradio_notify_currentsong (void);
 /*
  *  実行中の mpv を止める
  */
-static pid_t current_mpv = 0;
+
 void mpvradio_stop_mpv (void)
 {
-    if (current_mpv) {
-        g_message ("kill %d", current_mpv);
-        kill (current_mpv, SIGTERM);
-    }
+    //~ if (current_mpv) {
+        //~ g_message ("kill %d", current_mpv);
+        //~ kill (current_mpv, SIGTERM);
+    //~ }
+
+    mpvradio_ipc_send ("{\"command\": [\"stop\"]}\x0a");
 }
 
 /*
@@ -97,55 +100,14 @@ void mpvradio_stop_mpv (void)
 static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
                                                 gpointer data)
 {
-    pid_t pid, pid2;
-
-    int status;
-    int pfd[2];
-
     char *url = mpvradio_stationbutton_get_uri (btn);
+    char *message;
 
-    if (pipe(pfd) == -1) {
-        g_error ("パイプの作成に失敗");
-        return;
-    }
-
-    pid = fork ();
-    if (pid == -1) {
-        // 失敗
-        g_error ("子プロセスの起動に失敗");
-    } else if (pid == 0) {
-        // 子プロセス
-        pid2 = fork ();
-        if (pid2 == -1) {
-            // 失敗
-            g_error ("孫プロセスの起動に失敗");
-        }
-        else if (pid2 == 0) {
-            // 孫プロセス
-            // 呼び出し元のこのスレッド以外は引き継がない事に注意。
-            //~ xapp_status_icon_set_label (appindicator, gtk_button_get_label (btn));
-            mpvradio_stop_mpv ();
-            execlp ("mpv", "mpv", url, (char*)NULL);
-        }
-        else {
-            // 子プロセスは親プロセスにpipeで pidを返してすぐに終了、
-            // 孫プロセスは孤児となる
-            close (pfd[0]);
-            write (pfd[1], &pid2, sizeof(pid2));
-            close (pfd[1]);
-            g_message ( "pid send : %d", pid2);
-            exit (0);
-        }
-    }
-    else {
-        // 親プロセス
-        close (pfd[1]);
-        read (pfd[0], &current_mpv, sizeof(current_mpv));
-        close (pfd[0]);
-        waitpid (pid, &status, 0);
-        g_message ("pid recv : %d", current_mpv);
-    }
+    message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
+    mpvradio_ipc_send (message);
+    g_free (message);
 }
+
 
 /*
  * 音量調整
@@ -489,6 +451,9 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
 
     /* ラジオ局一覧 (playlist)の読み込み */
     mpvradio_read_playlist ();
+
+    /* mpv スタート */
+    mpvradio_ipc_fork_mpv ();
 }
 
 static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
@@ -512,6 +477,8 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     detach_config_file (kconf);
 
     g_hash_table_destroy (playlist_table);
+
+    mpvradio_ipc_kill_mpv ();
     g_message ("shutdown now.");
 }
 

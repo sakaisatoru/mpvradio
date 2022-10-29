@@ -1,5 +1,7 @@
-master
-mpv を都度起動、終了する
-
 testing
-ipcによる通信で制御する
+ipcにてmpvを制御する
+mpv --idle --input-ipc-server=/run/user/1000/mpvsocket --no-video &
+
+echo '{"command": ["loadfile","http://stream-dc1.radioparadise.com/rp_96m.ogg"]}' | socat - /run/user/1000/mpvsocket
+
+echo '{"command": ["stop"]}' | socat - /run/user/1000/mpvsocket
