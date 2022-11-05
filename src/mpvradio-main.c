@@ -116,7 +116,13 @@ static void volume_value_change_cb (GtkScaleButton *button,
                                            double          value,
                                            gpointer        user_data)
 {
-    mpvradio_common_volume_value_change (value);
+    char *message;
+
+    message =
+        g_strdup_printf ("{\"command\": [\"set_property\",\"volume\",%d]}\x0a", (uint32_t)(value*100.));
+    //~ g_print (message);
+    mpvradio_ipc_send (message);
+    g_free (message);
 }
 
 static void radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
@@ -259,8 +265,10 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();
+    //~ gtk_scale_button_set_value (volbtn, 1.0);
     g_signal_connect (G_OBJECT(volbtn), "value-changed",
                         G_CALLBACK(volume_value_change_cb), NULL);
+
     volume_up_button = gtk_scale_button_get_plus_button (volbtn);
     volume_down_button = gtk_scale_button_get_minus_button (volbtn);
 
@@ -283,7 +291,7 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     gtk_header_bar_set_has_subtitle (GTK_HEADER_BAR (header), TRUE);
     gtk_window_set_titlebar (GTK_WINDOW (window), header);
     //~ gtk_header_bar_pack_start (GTK_HEADER_BAR (header), menubtn);
-    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
+    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
     //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), stopbtn);
 
