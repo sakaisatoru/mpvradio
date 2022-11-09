@@ -120,7 +120,6 @@ static void volume_value_change_cb (GtkScaleButton *button,
 
     message =
         g_strdup_printf ("{\"command\": [\"set_property\",\"volume\",%d]}\x0a", (uint32_t)(value*100.));
-    //~ g_print (message);
     mpvradio_ipc_send (message);
     g_free (message);
 }
@@ -242,7 +241,7 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
 
     char *playlist[] = {"00_radiko", "radio"};
     int i, width, height;
-    double vol;
+    double vol = 0.5;
 
     GtkWidget *window, *btn, *header, *scroll, *box;
     GtkWidget *infobar, *infotext, *infocontainer;
@@ -257,7 +256,6 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
                         G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
                         G_CALLBACK(gtk_widget_hide_on_delete), NULL);
-
     // メニューボタン
     //~ menubtn = gtk_menu_button_new ();
     //~ menumodel = gtk_application_get_app_menu (application);
@@ -283,12 +281,12 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
                                                 GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT(stopbtn), "clicked",
                                 G_CALLBACK(mpvradio_common_cb), mpvradio_common_stop);
-
     header = gtk_header_bar_new ();
     gtk_header_bar_set_decoration_layout (header, "menu:close");
     gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header), TRUE);
     gtk_header_bar_set_title (GTK_HEADER_BAR (header), PACKAGE);
     gtk_header_bar_set_has_subtitle (GTK_HEADER_BAR (header), TRUE);
+
     gtk_window_set_titlebar (GTK_WINDOW (window), header);
     //~ gtk_header_bar_pack_start (GTK_HEADER_BAR (header), menubtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);

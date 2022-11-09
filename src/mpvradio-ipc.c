@@ -64,20 +64,20 @@ void mpvradio_ipc_fork_mpv (void)
     int pfd[2];
 
     if (pipe(pfd) == -1) {
-        g_error ("パイプの作成に失敗");
+        g_message ("パイプの作成に失敗");
         return;
     }
 
     pid = fork ();
     if (pid == -1) {
         // 失敗
-        g_error ("子プロセスの起動に失敗");
+        g_message ("子プロセスの起動に失敗");
     } else if (pid == 0) {
         // 子プロセス
         pid2 = fork ();
         if (pid2 == -1) {
             // 失敗
-            g_error ("孫プロセスの起動に失敗");
+            g_message ("孫プロセスの起動に失敗");
         }
         else if (pid2 == 0) {
             // 孫プロセス
@@ -122,7 +122,7 @@ int mpvradio_ipc_send (char *message)
     // UNIXドメインのソケットを作成
     fd = socket (AF_LOCAL, SOCK_STREAM, 0);
     if (fd == -1) {
-        g_error ("failed to create_socket(errno=%d:%s)\n", errno, strerror (errno));
+        g_message ("failed to create_socket(errno=%d:%s)\n", errno, strerror (errno));
         return -1;
     }
 
@@ -133,18 +133,16 @@ int mpvradio_ipc_send (char *message)
     // サーバーに接続
     ret_code = connect(fd, (const struct sockaddr *)&sun, sizeof(sun));
     if (ret_code == -1) {
-        g_error ("failed to create_socket(errno:%d, error_str:%s)\n", errno, strerror(errno));
-        close(fd);
+        g_message ("failed to connect_socket(errno:%d, error_str:%s)\n", errno, strerror(errno));
+        close (fd);
         return -1;
     }
-    g_message ("サーバー接続OK");
-
 
     // 送信
     message_len = strlen (message);
     size = write (fd, message, message_len);
     if (size < message_len) {
-        g_error ("failed to send data(errno:%d, error_str:%s)\n", errno, strerror(errno));
+        g_message ("failed to send data(errno:%d, error_str:%s)\n", errno, strerror(errno));
         close (fd);
         return -1;
     }
