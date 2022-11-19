@@ -66,6 +66,10 @@ static gboolean mpvradio_recv_stop;
 static GtkActionGroup *actions;
 static gboolean mpvradio_connection_in;
 
+static const gint button_width = 200;
+static const gint button_height = 70;
+
+
 /* mpvradio_adduri.c */
 extern void mpvradio_adduri_quicktune (GtkWindow *oya);
 //~ extern void mpvradio_adduridialog_destroy (void);
@@ -192,16 +196,19 @@ static GtkWidget *selectergrid_new (void)
     gpointer station, url;
 
     gint x = 0, y = 0, mx = 0, width = 0, height = 0, i;
-    gint button_width = 200, button_height = 70;
-    gint x_margin = 2, y_margin = 2;
+
+    gint x_margin = 1, y_margin = 1;
     char *playlist[] = {"00_radiko", "radio"};
 
     /*
      * playlist_table をチェックして選局ボタンを並べる
      */
-    grid = gtk_grid_new ();
-    gtk_grid_set_column_spacing (grid, x_margin);
-    gtk_grid_set_row_spacing (grid, y_margin);
+    //~ grid = gtk_grid_new ();
+    //~ gtk_grid_set_column_spacing (grid, x_margin);
+    //~ gtk_grid_set_row_spacing (grid, y_margin);
+    grid = gtk_flow_box_new ();
+    gtk_flow_box_set_column_spacing (grid, x_margin);
+    gtk_flow_box_set_row_spacing (grid, y_margin);
 
     g_hash_table_iter_init (&iter, playlist_table);
 
@@ -213,18 +220,19 @@ static GtkWidget *selectergrid_new (void)
         g_signal_connect (G_OBJECT(btn), "clicked",
             G_CALLBACK(_mpvradio_radiopanel_clicked_cb), NULL);
 
-        gtk_grid_attach (grid, btn, x, y, 1, 1);
+        //~ gtk_grid_attach (grid, btn, x, y, 1, 1);
+        gtk_container_add (GTK_CONTAINER(grid), btn);
 
-        if (mx++ < 5) {
-            width += (button_width + x_margin);
-        }
-        if (x++ > 3) {
-            x = 0;
-            y++;    //height += (button_height + y_margin);
-        }
+        //~ if (mx++ < 5) {
+            //~ width += (button_width + x_margin);
+        //~ }
+        //~ if (x++ > 3) {
+            //~ x = 0;
+            //~ y++;    //height += (button_height + y_margin);
+        //~ }
     }
 
-    gtk_widget_set_size_request (grid ,width, (button_height + y_margin)*(y+1));
+    //~ gtk_widget_set_size_request (grid ,width, (button_height + y_margin)*(y+1));
     return grid;
 }
 
@@ -314,9 +322,7 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
 
     gtk_container_add (window, box);
 
-    gtk_widget_get_size_request (selectergrid, &width, &height);
-    //~ g_message ("width : %d   height %d\n", width, height);
-    gtk_window_set_default_size (GTK_WINDOW (window), width, height);
+    gtk_window_set_default_size (GTK_WINDOW (window), button_width * 4, button_height * 4);
     //~ gtk_window_set_default_size (GTK_WINDOW (window), 800, 600);
     return window;
 }
