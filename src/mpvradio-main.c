@@ -187,7 +187,7 @@ void mpvradio_read_playlist (void)
 
 
 /*
- * 選局ボタンを並べたgridを返す
+ * 選局ボタンを並べたgtk_flow_boxを返す
  */
 static GtkWidget *selectergrid_new (void)
 {
@@ -195,20 +195,15 @@ static GtkWidget *selectergrid_new (void)
     GHashTableIter iter;
     gpointer station, url;
 
-    gint x = 0, y = 0, mx = 0, width = 0, height = 0, i;
-
     gint x_margin = 1, y_margin = 1;
     char *playlist[] = {"00_radiko", "radio"};
 
     /*
      * playlist_table をチェックして選局ボタンを並べる
      */
-    //~ grid = gtk_grid_new ();
-    //~ gtk_grid_set_column_spacing (grid, x_margin);
-    //~ gtk_grid_set_row_spacing (grid, y_margin);
     grid = gtk_flow_box_new ();
-    gtk_flow_box_set_column_spacing (grid, x_margin);
-    gtk_flow_box_set_row_spacing (grid, y_margin);
+    gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), x_margin);
+    gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), y_margin);
 
     g_hash_table_iter_init (&iter, playlist_table);
 
@@ -220,19 +215,9 @@ static GtkWidget *selectergrid_new (void)
         g_signal_connect (G_OBJECT(btn), "clicked",
             G_CALLBACK(_mpvradio_radiopanel_clicked_cb), NULL);
 
-        //~ gtk_grid_attach (grid, btn, x, y, 1, 1);
         gtk_container_add (GTK_CONTAINER(grid), btn);
-
-        //~ if (mx++ < 5) {
-            //~ width += (button_width + x_margin);
-        //~ }
-        //~ if (x++ > 3) {
-            //~ x = 0;
-            //~ y++;    //height += (button_height + y_margin);
-        //~ }
     }
 
-    //~ gtk_widget_set_size_request (grid ,width, (button_height + y_margin)*(y+1));
     return grid;
 }
 
@@ -264,10 +249,6 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
                         G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
                         G_CALLBACK(gtk_widget_hide_on_delete), NULL);
-    // メニューボタン
-    //~ menubtn = gtk_menu_button_new ();
-    //~ menumodel = gtk_application_get_app_menu (application);
-    //~ gtk_menu_button_set_menu_model (menubtn, menumodel);
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();
@@ -289,6 +270,7 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
                                                 GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT(stopbtn), "clicked",
                                 G_CALLBACK(mpvradio_common_cb), mpvradio_common_stop);
+
     header = gtk_header_bar_new ();
     gtk_header_bar_set_decoration_layout (header, "menu:close");
     gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header), TRUE);
@@ -328,6 +310,47 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
 }
 
 static void
+fileopen_activated (GSimpleAction *action,
+                       GVariant      *parameter,
+                       gpointer       app)
+{
+    GList *windows;
+    GtkWidget *dialog;
+    gint res;
+
+    GtkFileChooserAction act = GTK_FILE_CHOOSER_ACTION_OPEN;
+
+    windows = gtk_application_get_windows (app);
+    if (windows != NULL) {
+        dialog = gtk_file_chooser_dialog_new ("Open File",
+                                                windows->data,
+                                                act,
+                                                _("_Cancel"),
+                                                GTK_RESPONSE_CANCEL,
+                                                _("_Open"),
+                                                GTK_RESPONSE_ACCEPT,
+                                                NULL);
+        res = gtk_dialog_run (GTK_DIALOG(dialog));
+        if (res == GTK_RESPONSE_ACCEPT) {
+            GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
+            char *filename = gtk_file_chooser_get_filename (chooser);
+            // 以下の処理が躓くとダイアログが閉じないので先に閉じる
+            gtk_widget_destroy (dialog);
+
+            // 処理
+            char *message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", filename);
+            g_message ("file name : %s", filename);
+            g_free (filename);
+            mpvradio_ipc_send (message);
+            g_free (message);
+        }
+        else {
+            gtk_widget_destroy (dialog);
+        }
+    }
+}
+
+static void
 quicktune_activated (GSimpleAction *action,
                        GVariant      *parameter,
                        gpointer       app)
@@ -345,7 +368,7 @@ about_activated (GSimpleAction *action,
                        GVariant      *parameter,
                        gpointer       app)
 {
-    GtkWindow *oya;
+    //~ GtkWindow *oya;
     gchar *authors[] = { "endeavor wako", "sakai satoru", NULL };
     GList *windows = gtk_application_get_windows (app);
 
@@ -389,6 +412,7 @@ static GActionEntry app_entries[] =
 {
   //~ { "disconnect", disconnect_activated, NULL, NULL, NULL },
   //~ { "quicktune", quicktune_activated, NULL, NULL, NULL },
+  { "fileopen", fileopen_activated, NULL, NULL, NULL },
   { "about", about_activated, NULL, NULL, NULL },
   { "quit", quit_activated, NULL, NULL, NULL }
 };
@@ -415,6 +439,10 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
         "<attribute name=\"label\" translatable=\"yes\">QuickTune</attribute>"
         "<attribute name=\"action\">app.quicktune</attribute>"
       "</item>"
+      "<item>"
+        "<attribute name=\"label\" translatable=\"yes\">FileOpen</attribute>"
+        "<attribute name=\"action\">app.fileopen</attribute>"
+      "</item>"
     "</section>"
     "<section>"
       "<item>"
@@ -434,12 +462,16 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
     "</interface>",
                                             -1);
     const gchar *quit_accels[2] = { "<Ctrl>Q", NULL };
+    const gchar *open_accels[2] = { "<Ctrl>O", NULL };
     g_action_map_add_action_entries (G_ACTION_MAP (app),
                                    app_entries, G_N_ELEMENTS (app_entries),
                                    app);
     gtk_application_set_accels_for_action (GTK_APPLICATION (app),
                                          "app.quit",
                                          quit_accels);
+    gtk_application_set_accels_for_action (GTK_APPLICATION (app),
+                                         "app.fileopen",
+                                         open_accels);
 
     app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu"));
     gtk_application_set_app_menu (GTK_APPLICATION (app), app_menu);
@@ -506,13 +538,6 @@ static void mpvradio_activate_cb (GtkApplication *app, gpointer data)
     gtk_window_present (radikopanel);
 }
 
-static void init_locale (void)
-{
-    setlocale (LC_ALL, "");
-    bindtextdomain (PACKAGE, LOCALEDIR);
-    textdomain (PACKAGE);
-}
-
 /*
  * エントリー
  */
@@ -521,7 +546,10 @@ int main (int argc, char **argv)
     GtkApplication  *app;
     int             status;
 
-    init_locale ();
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, LOCALEDIR);
+    textdomain (PACKAGE);
+
     app = gtk_application_new ("com.google.endeavor2wako.mpvradio",
                                             G_APPLICATION_FLAGS_NONE);
     g_signal_connect (app, "startup",  G_CALLBACK (mpvradio_startup_cb),  NULL);
