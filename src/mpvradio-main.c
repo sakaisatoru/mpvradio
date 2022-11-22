@@ -84,19 +84,6 @@ extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 /* mpvradio-notify.c */
 extern void mpvradio_notify_currentsong (void);
 
-/*
- *  実行中の mpv を止める
- */
-
-void mpvradio_stop_mpv (void)
-{
-    //~ if (current_mpv) {
-        //~ g_message ("kill %d", current_mpv);
-        //~ kill (current_mpv, SIGTERM);
-    //~ }
-
-    mpvradio_ipc_send ("{\"command\": [\"stop\"]}\x0a");
-}
 
 /*
  * 選局ボタンのコールバック
@@ -107,6 +94,7 @@ static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
     char *url = mpvradio_stationbutton_get_uri (btn);
     char *message;
 
+    mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
     message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
     mpvradio_ipc_send (message);
     g_free (message);
@@ -504,7 +492,8 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 {
     GList *windows;
 
-    mpvradio_stop_mpv ();
+    //~ mpvradio_stop_mpv ();
+    mpvradio_common_stop ();    // appindicatorが存在するうちに呼ぶ事
 
     g_object_unref (appindicator);
 

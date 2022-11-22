@@ -26,6 +26,7 @@
 /* mpvradio-common.c */
 extern void mpvradio_common_cb (GtkWidget *widget, gpointer user_data);
 extern void mpvradio_common_play (void);
+extern void mpvradio_common_toggle_pause (void);
 extern void mpvradio_common_stop (void);
 extern void mpvradio_common_next (void);
 extern void mpvradio_common_prev (void);

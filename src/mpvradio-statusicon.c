@@ -109,22 +109,23 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
     if (button == 3) {
         /* メニュー作成 */
         menu = gtk_menu_new ();
-        menuitem = gtk_menu_item_new_with_label ("play");
+        menuitem = gtk_menu_item_new_with_label ("pause");
         g_signal_connect (menuitem, "activate",
-            G_CALLBACK (mpvradio_common_cb), mpvradio_common_play);
+            //~ G_CALLBACK (mpvradio_common_cb), mpvradio_common_play);
+            G_CALLBACK (mpvradio_common_cb), mpvradio_common_toggle_pause);
         gtk_menu_shell_append (menu, menuitem);
         menuitem = gtk_menu_item_new_with_label ("stop");
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (mpvradio_common_cb), mpvradio_common_stop);
         gtk_menu_shell_append (menu, menuitem);
-        //~ menuitem = gtk_menu_item_new_with_label ("next");
-        //~ g_signal_connect (menuitem, "activate",
-            //~ G_CALLBACK (mpvradio_common_cb), mpvradio_common_next);
-        //~ gtk_menu_shell_append (menu, menuitem);
-        //~ menuitem = gtk_menu_item_new_with_label ("prev");
-        //~ g_signal_connect (menuitem, "activate",
-            //~ G_CALLBACK (mpvradio_common_cb), mpvradio_common_prev);
-        //~ gtk_menu_shell_append (menu, menuitem);
+        menuitem = gtk_menu_item_new_with_label ("next");
+        g_signal_connect (menuitem, "activate",
+            G_CALLBACK (mpvradio_common_cb), mpvradio_common_next);
+        gtk_menu_shell_append (menu, menuitem);
+        menuitem = gtk_menu_item_new_with_label ("prev");
+        g_signal_connect (menuitem, "activate",
+            G_CALLBACK (mpvradio_common_cb), mpvradio_common_prev);
+        gtk_menu_shell_append (menu, menuitem);
 
         gtk_menu_shell_append (menu, gtk_separator_menu_item_new ());
 
@@ -132,6 +133,7 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (menu_quit_cb), app);
         gtk_menu_shell_append (menu, menuitem);
+        //~ gtk_menu_shell_prepend (menu, menuitem);
 
         gtk_widget_show_all (menu);
         xapp_status_icon_popup_menu (icon, menu, x, y, button, time, panel_position);
