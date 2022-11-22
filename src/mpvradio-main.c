@@ -226,7 +226,7 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
 
     GtkWidget *window, *btn, *header, *scroll, *box;
     GtkWidget *infobar, *infotext, *infocontainer;
-    GtkWidget *volbtn, *stopbtn, *playbtn;
+    GtkWidget *volbtn, *stopbtn, *playbtn, *nextbtn, *prevbtn;
     GtkWidget *menubtn;
     GMenuModel *menumodel;
 
@@ -248,11 +248,21 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     volume_down_button = gtk_scale_button_get_minus_button (volbtn);
 
 
+    // 戻るボタン
+    prevbtn = gtk_button_new_from_icon_name ("media-skip-backward",
+                                                GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT(prevbtn), "clicked",
+                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_prev);
     // プレイ・ポーズボタン
-    playbtn = gtk_button_new_from_icon_name ("media-playback-start-symbolic",
+    playbtn = gtk_button_new_from_icon_name ("media-playback-pause-symbolic",
                                                 GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT(playbtn), "clicked",
-                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_play);
+                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_toggle_pause);
+    // 進むボタン
+    nextbtn = gtk_button_new_from_icon_name ("media-skip-forward",
+                                                GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT(nextbtn), "clicked",
+                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_next);
     // ストップボタン
     stopbtn = gtk_button_new_from_icon_name ("media-playback-stop-symbolic",
                                                 GTK_ICON_SIZE_BUTTON);
@@ -268,8 +278,10 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     gtk_window_set_titlebar (GTK_WINDOW (window), header);
     //~ gtk_header_bar_pack_start (GTK_HEADER_BAR (header), menubtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
-    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), stopbtn);
+    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), nextbtn);
+    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
+    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), prevbtn);
 
 
     /* エラー表示用 */
