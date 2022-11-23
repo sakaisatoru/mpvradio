@@ -47,11 +47,13 @@
 #include "mpvradio-stationbutton.h"
 #include "mpvradio-common.h"
 #include "mpvradio-statusicon.h"
+#include "mpvradio-ipc.h"
 
 NotifyNotification *notifi;         // デスクトップ通知
 GtkWindow *radikopanel;
 GtkWindow *selectergrid;
 XAppStatusIcon *appindicator;       // LinuxMint 専用
+GtkWidget *infomessage;             // IPC受け取り後の格納用
 
 static GKeyFile *kconf;
 
@@ -284,12 +286,11 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), prevbtn);
 
 
-    /* エラー表示用 */
-    infobar = gtk_info_bar_new ();
-    gtk_widget_set_no_show_all (infobar, TRUE);
-    infotext = gtk_label_new ("");
-    infocontainer = gtk_info_bar_get_content_area (infobar);
-    gtk_container_add (GTK_CONTAINER(infocontainer), infotext);
+    /* 情報表示用 */
+    infobar = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
+    infotext = gtk_entry_new_with_buffer (infomessage);
+    gtk_widget_set_can_focus (infotext, FALSE);
+    gtk_box_pack_start (infobar, infotext, FALSE, TRUE, 0);
 
     box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
     gtk_box_pack_start (box, infobar, FALSE, TRUE, 0);
@@ -481,6 +482,9 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
 
     g_object_unref (builder);
 
+    /* IPC 受け取り後の情報格納用 */
+    infomessage = gtk_entry_buffer_new ("mpvradio",-1);
+
     /* デスクトップ通知の準備 */
     notify_init (PACKAGE);
     notifi = notify_notification_new (PACKAGE, "a mpd client for radio", mpvradioICON);
@@ -498,6 +502,9 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
 
     /* mpv スタート */
     mpvradio_ipc_fork_mpv ();
+
+    /* ipc サーバを動かす */
+    g_thread_new ("mpvradio", mpvradio_ipc_recv, NULL);
 }
 
 static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
@@ -524,6 +531,8 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     g_hash_table_destroy (playlist_table);
 
     mpvradio_ipc_kill_mpv ();
+    mpvradio_ipc_remove_socket ();
+    g_object_unref (infomessage);
     g_message ("shutdown now.");
 }
 

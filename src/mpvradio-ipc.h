@@ -24,7 +24,10 @@
 #ifndef mpvradic_ipc_H
 #define mpvradic_ipc_H
 
-char *mpvradio_ipc_send_and_recv (char *message);
+void mpvradio_ipc_remove_socket (void);
+
+gpointer mpvradio_ipc_recv (gpointer n);
+char *mpvradio_ipc_send_and_response (char *message);
 int mpvradio_ipc_send (char *message);
 void mpvradio_ipc_kill_mpv (void);
 void mpvradio_ipc_fork_mpv (void);

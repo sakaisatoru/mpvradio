@@ -25,6 +25,7 @@
 #include "mpvradio-ipc.h"
 
 extern XAppStatusIcon *appindicator;
+extern GtkWidget *infomessage;             // IPC受け取り後の格納用
 
 /*
  * シグナルコールバック用の汎用ラッパ
@@ -57,7 +58,7 @@ void mpvradio_common_toggle_pause (void)
     int retval = 0;
     GError *er;
 
-    s = mpvradio_ipc_send_and_recv (
+    s = mpvradio_ipc_send_and_response (
         "{\"command\": [\"get_property\", \"pause\"]}\x0a");
     //~ g_message ("pause -->");g_message ("[=[%s]=]\n",s);
     JsonParser *parser = json_parser_new ();
@@ -99,7 +100,9 @@ void mpvradio_common_stop (void)
         //~ kill (current_mpv, SIGTERM);
     //~ }
     mpvradio_ipc_send ("{\"command\": [\"stop\"]}\x0a");
-    xapp_status_icon_set_label (appindicator, "");
+    gtk_entry_buffer_set_text (infomessage, "",-1);
+    xapp_status_icon_set_label (appindicator,
+                            gtk_entry_buffer_get_text (infomessage));
 }
 
 /*

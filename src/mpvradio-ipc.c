@@ -37,6 +37,8 @@
 
 #include "glib/gi18n.h"
 #include "gtk/gtk.h"
+#include "libxapp/xapp-status-icon.h"
+#include "libxapp/xapp-preferences-window.h"
 
 #include <json-glib/json-glib.h>
 #include <json-glib/json-gobject.h>
@@ -48,9 +50,128 @@
 
 #define READ_BUFFER_SIZE    1024
 
+#define MPVRADIO_SOCKET_PATH    "/run/user/1000/mpvradio"
+
+void mpvradio_ipc_remove_socket (void)
+{
+    if (!access (MPVRADIO_SOCKET_PATH, F_OK)) {
+        remove (MPVRADIO_SOCKET_PATH);
+    }
+}
+
+/*
+ * IPC サーバー
+ * 別スレッドで動かすこと
+ */
+extern XAppStatusIcon *appindicator;       // LinuxMint 専用
+extern GtkWidget *infomessage;             // IPC受け取り後の格納用
+
+gpointer mpvradio_ipc_recv (gpointer n)
+{
+    char *retbuf = NULL;
+    int ipc_recv_fd, fd, ret;
+    GError error[0];
+    gsize bytes_read;
+
+    GIOStatus ch_stat;
+    gsize len;
+    GIOChannel *ch_recv;
+
+    struct sockaddr_un sun, sun_client;
+
+    memset (&sun, 0, sizeof(sun));
+    memset (&sun_client, 0, sizeof(sun_client));
+    socklen_t socklen = sizeof(sun_client);
+
+    // 既存のソケットを削除
+    mpvradio_ipc_remove_socket ();
+
+    // UNIXドメインのソケットを作成
+    ipc_recv_fd = socket (AF_UNIX, SOCK_STREAM, 0);
+    if (ipc_recv_fd == -1) {
+        g_error ("failed to socket(errno:%d, error_str:%s)\n", errno, strerror(errno));
+        g_thread_exit (NULL);
+    }
+
+    // ソケットアドレス構造体を設定
+    sun.sun_family = AF_UNIX;                       // UNIXドメイン
+    strcpy (sun.sun_path, MPVRADIO_SOCKET_PATH);    // UNIXドメインソケットのパスを指定
+
+    // 上記設定をソケットに紐づける
+    ret = bind (ipc_recv_fd, (const struct sockaddr *)&sun, sizeof(sun));
+    if (ret == -1) {
+        g_error ("failed to bind(errno:%d, error_str:%s)\n", errno, strerror(errno));
+        close (ipc_recv_fd);
+        g_thread_exit (NULL);
+    }
+
+    // ソケットに接続待ちを設定する。
+    ret = listen (ipc_recv_fd, 3);
+    if (ret == -1) {
+        g_error ("failed to listen(errno:%d, error_str:%s)\n", errno, strerror(errno));
+        close (ipc_recv_fd);
+        ipc_recv_fd = -1;
+        g_thread_exit (NULL);
+    }
+
+    for (;;){
+        g_thread_yield ();
+
+        fd = accept (ipc_recv_fd, (struct sockaddr *)&sun_client, &socklen);
+        if (fd == -1) {
+            printf("failed to accept(errno:%d, error_str:%s)\n", errno, strerror(errno));
+            continue;
+        }
+
+        ch_recv = g_io_channel_unix_new (fd);
+        ch_stat = g_io_channel_read_line (
+                                ch_recv, &retbuf, NULL, NULL, &error);
+        if (ch_stat == G_IO_STATUS_NORMAL) {
+            gtk_entry_buffer_set_text (infomessage, retbuf, -1);
+            xapp_status_icon_set_tooltip_text (appindicator,
+                            gtk_entry_buffer_get_text (infomessage));
+        }
+        else {
+            g_error ("mpvradio_ipc_recv : (gerror %d : %s)\n",error->code, error->message);
+            g_free (retbuf);
+            g_io_channel_unref (ch_recv);
+            close (fd);
+            fd = -1;
+            continue;
+        }
+
+        // レスポンス
+        ch_stat = g_io_channel_write_chars (ch_recv, "OK\n", -1, &len, &error);
+
+        if (ch_stat == G_IO_STATUS_ERROR) {
+            g_error ("mpvradio_ipc_recv : (gerror %d : %s)\n",error->code, error->message);
+        }
+
+        g_free (retbuf);
+        g_io_channel_unref (ch_recv);
+        close (fd);
+        fd = -1;
+    }
+
+
+exit_this:
+    g_io_channel_unref (ch_recv);
+    close (fd);
+    close (ipc_recv_fd);
+    g_free (retbuf);
+
+    g_thread_exit (NULL);
+}
+
+
+
+
+
 
 static pid_t current_mpv = 0;
-
+/*
+ * 起動したmpvを終了する
+ */
 void mpvradio_ipc_kill_mpv (void)
 {
     if (current_mpv) {
@@ -59,6 +180,9 @@ void mpvradio_ipc_kill_mpv (void)
     }
 }
 
+/*
+ * mpvを起動する
+ */
 void mpvradio_ipc_fork_mpv (void)
 {
     pid_t pid, pid2;
@@ -111,11 +235,15 @@ void mpvradio_ipc_fork_mpv (void)
 }
 
 /*
- * mpv に message を送ってレスポンスを返す。
- * レスポンスは使用後に g_free で必ず開放する事。
- * 何らかのエラーが発生した際は NULL を返す。
+ * mpv に message を送る。
+ *
+ * 引数 : message   mpv へ送る文字列
+ * 戻値 : mpvのレスポンスをそのまま返す。
+ * 注意 : レスポンスは使用後に g_free で必ず開放する事。
+ *       何らかのエラーが発生した際は NULL を返す。
+ *
  */
-char *mpvradio_ipc_send_and_recv (char *message)
+char *mpvradio_ipc_send_and_response (char *message)
 {
     int ret_code = 0;
     uint32_t message_len = 0;
@@ -174,12 +302,19 @@ char *mpvradio_ipc_send_and_recv (char *message)
     return retstr;
 }
 
+/*
+ * mpv へ message を送る
+ *
+ * 引数 : message  mpv へ送る文字列
+ * 戻値 : 成功した(success)場合は 0,それ以外は -1
+ *
+ */
 int mpvradio_ipc_send (char *message)
 {
     char *s;
     int retval = 0;
 
-    s = mpvradio_ipc_send_and_recv (message);
+    s = mpvradio_ipc_send_and_response (message);
 
     JsonParser *parser = json_parser_new ();
     json_parser_load_from_data (parser, s, -1, NULL);
