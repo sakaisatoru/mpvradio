@@ -126,10 +126,10 @@ gpointer mpvradio_ipc_recv (gpointer n)
         ch_recv = g_io_channel_unix_new (fd);
         ch_stat = g_io_channel_read_line (
                                 ch_recv, &retbuf, NULL, NULL, &error);
+
         if (ch_stat == G_IO_STATUS_NORMAL) {
-            gtk_entry_buffer_set_text (infomessage, retbuf, -1);
-            xapp_status_icon_set_tooltip_text (appindicator,
-                            gtk_entry_buffer_get_text (infomessage));
+            //~ gtk_entry_buffer_set_text (infomessage, retbuf, -1);
+            xapp_status_icon_set_tooltip_text (appindicator, retbuf);
         }
         else {
             g_error ("mpvradio_ipc_recv : (gerror %d : %s)\n",error->code, error->message);
