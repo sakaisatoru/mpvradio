@@ -59,12 +59,29 @@ void mpvradio_ipc_remove_socket (void)
     }
 }
 
+
+
+
 /*
  * IPC サーバー
  * 別スレッドで動かすこと
  */
 extern XAppStatusIcon *appindicator;       // LinuxMint 専用
 extern GtkWidget *infomessage;             // IPC受け取り後の格納用
+
+static void destroy_notify (gpointer hoge)
+{
+    //~ g_print ("破壊された。引数は %s です。\n",hoge);
+    g_free (hoge);
+}
+
+static gboolean source_func (gpointer fuga)
+{
+    //~ g_print ("ソースです。引数は %s です。\n",fuga);
+    xapp_status_icon_set_tooltip_text (appindicator, fuga);
+    gtk_entry_buffer_set_text (infomessage, fuga, -1);
+    return FALSE;   // FALSEを返さないと繰り返し実行されてしまう。
+}
 
 gpointer mpvradio_ipc_recv (gpointer n)
 {
@@ -128,8 +145,12 @@ gpointer mpvradio_ipc_recv (gpointer n)
                                 ch_recv, &retbuf, NULL, NULL, &error);
 
         if (ch_stat == G_IO_STATUS_NORMAL) {
-            //~ gtk_entry_buffer_set_text (infomessage, retbuf, -1);
-            xapp_status_icon_set_tooltip_text (appindicator, retbuf);
+            /*
+             * メインスレッド側のwidgetを直接触るとおかしな事になるので、
+             * mainloop に処理を投げていい感じに動かしてもらう。
+             */
+            char *tmp = g_strdup (retbuf);
+            g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, source_func, tmp, destroy_notify);
         }
         else {
             g_error ("mpvradio_ipc_recv : (gerror %d : %s)\n",error->code, error->message);
