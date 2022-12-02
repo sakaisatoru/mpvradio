@@ -87,7 +87,7 @@ gpointer mpvradio_ipc_recv (gpointer n)
 {
     char *retbuf = NULL;
     int ipc_recv_fd, fd, ret;
-    GError error[0];
+    GError error[1];
     gsize bytes_read;
 
     GIOStatus ch_stat;
@@ -334,11 +334,15 @@ int mpvradio_ipc_send (char *message)
 {
     char *s;
     int retval = 0;
+    GError err[1];
 
     s = mpvradio_ipc_send_and_response (message);
 
     JsonParser *parser = json_parser_new ();
-    json_parser_load_from_data (parser, s, -1, NULL);
+    if (json_parser_load_from_data (parser, s, -1, &err) == FALSE) {
+        g_error (err->message);
+        goto exit_this;
+    }
 
     JsonReader *reader = json_reader_new (json_parser_get_root (parser));
 
@@ -370,9 +374,9 @@ int mpvradio_ipc_send (char *message)
     //~ json_reader_end_member (reader);
 
     g_object_unref (reader);
+
+exit_this:
     g_object_unref (parser);
-
-
     g_free (s);
 
     return retval;
