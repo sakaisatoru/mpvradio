@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/wait.h>
 
 #include <glib.h>
 #include <locale.h>
@@ -340,7 +341,7 @@ int mpvradio_ipc_send (char *message)
 
     JsonParser *parser = json_parser_new ();
     if (json_parser_load_from_data (parser, s, -1, &err) == FALSE) {
-        g_error (err->message);
+        g_error ("%s   exit mpvradio_ipc_send.",err[0].message);
         goto exit_this;
     }
 
