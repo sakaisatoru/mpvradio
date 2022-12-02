@@ -31,9 +31,10 @@
 #include <fcntl.h>
 #include <glib.h>
 
+#include "mpvradio-ipc.h"
 #include "mpvradio.h"
 
-void mpvradio_adduri_quicktune (GtkWindow *oya);
+gchar *mpvradio_adduri_quicktune (GtkWindow *oya);
 void mpvradio_adduridialog_destroy (void);
 
 static GtkWidget *dialog = NULL;
@@ -61,7 +62,8 @@ static void filechooser_file_set_cb (GtkFileChooserButton *widget,
     g_message (gtk_label_get_label (widget));
 }
 
-void mpvradio_adduri_quicktune (GtkWindow *oya)
+
+gchar *mpvradio_adduri_quicktune (GtkWindow *oya)
 {
     GtkWidget *label, *content_area, *entry, *filechooser, *hbox;
     struct mpd_connection *cn;
@@ -78,8 +80,8 @@ void mpvradio_adduri_quicktune (GtkWindow *oya)
     hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 3);
     label   = gtk_label_new (N_("URI:"));
     entry   = gtk_entry_new ();
-    filechooser = gtk_file_chooser_button_new (N_("FILE SELECT"),
-                                        GTK_FILE_CHOOSER_ACTION_OPEN);
+    //~ filechooser = gtk_file_chooser_button_new (N_("FILE SELECT"),
+                                        //~ GTK_FILE_CHOOSER_ACTION_OPEN);
 
     g_signal_connect (G_OBJECT(filechooser), "file-set",
         G_CALLBACK(filechooser_file_set_cb), entry);
@@ -88,7 +90,7 @@ void mpvradio_adduri_quicktune (GtkWindow *oya)
 
     gtk_misc_set_alignment (label, 0, 0.5);   // プロンプトを左寄せ
     gtk_box_pack_start (hbox, entry, TRUE, TRUE, 0);
-    gtk_box_pack_start (hbox, filechooser, TRUE, TRUE, 0);
+    //~ gtk_box_pack_start (hbox, filechooser, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX(content_area), label, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX(content_area), hbox, TRUE, TRUE, 0);
 
@@ -98,6 +100,9 @@ void mpvradio_adduri_quicktune (GtkWindow *oya)
         case GTK_RESPONSE_ACCEPT:
             str = g_strdup (gtk_entry_get_text (entry));
             if (strlen (str) != 0) {
+                gtk_widget_destroy (dialog);
+                dialog = NULL;
+                return str;
             }
             else {
                 g_warning (_("Null strings are not added."));
@@ -117,6 +122,7 @@ void mpvradio_adduri_quicktune (GtkWindow *oya)
 
     gtk_widget_destroy (dialog);
     dialog = NULL;
+    return NULL;
 }
 
 /*

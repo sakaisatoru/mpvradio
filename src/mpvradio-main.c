@@ -73,7 +73,7 @@ static const gint button_height = 70;
 
 
 /* mpvradio_adduri.c */
-extern void mpvradio_adduri_quicktune (GtkWindow *oya);
+extern gchar *mpvradio_adduri_quicktune (GtkWindow *oya);
 //~ extern void mpvradio_adduridialog_destroy (void);
 
 
@@ -359,7 +359,13 @@ quicktune_activated (GSimpleAction *action,
     GList *windows;
     windows = gtk_application_get_windows (app);
     if (windows != NULL) {
-        mpvradio_adduri_quicktune (windows->data);
+        gchar *uri = mpvradio_adduri_quicktune (windows->data);
+        if (uri != NULL) {
+            gchar *tmp = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", uri);
+            g_free (uri);
+            mpvradio_ipc_send (tmp);
+            g_free (tmp);
+        }
     }
 }
 
@@ -412,7 +418,7 @@ disconnect_activated (GSimpleAction *action,
 static GActionEntry app_entries[] =
 {
   //~ { "disconnect", disconnect_activated, NULL, NULL, NULL },
-  //~ { "quicktune", quicktune_activated, NULL, NULL, NULL },
+  { "quicktune", quicktune_activated, NULL, NULL, NULL },
   { "fileopen", fileopen_activated, NULL, NULL, NULL },
   { "about", about_activated, NULL, NULL, NULL },
   { "quit", quit_activated, NULL, NULL, NULL }
@@ -464,9 +470,13 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
                                             -1);
     const gchar *quit_accels[2] = { "<Ctrl>Q", NULL };
     const gchar *open_accels[2] = { "<Ctrl>O", NULL };
+    const gchar *url_accels[2]  = { "<Ctrl>L", NULL };
     g_action_map_add_action_entries (G_ACTION_MAP (app),
                                    app_entries, G_N_ELEMENTS (app_entries),
                                    app);
+    gtk_application_set_accels_for_action (GTK_APPLICATION (app),
+                                         "app.quicktune",
+                                         url_accels);
     gtk_application_set_accels_for_action (GTK_APPLICATION (app),
                                          "app.quit",
                                          quit_accels);
