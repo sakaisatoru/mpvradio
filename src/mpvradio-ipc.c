@@ -335,13 +335,13 @@ int mpvradio_ipc_send (char *message)
 {
     char *s;
     int retval = 0;
-    GError err[1];
+    GError *err[1];
 
     s = mpvradio_ipc_send_and_response (message);
 
     JsonParser *parser = json_parser_new ();
     if (json_parser_load_from_data (parser, s, -1, &err) == FALSE) {
-        g_error ("%s   exit mpvradio_ipc_send.",err[0].message);
+        g_error ("%s   exit mpvradio_ipc_send.",err[0]->message);
         goto exit_this;
     }
 
