@@ -158,7 +158,7 @@ void mpvradio_read_playlist (void)
                         if (pos[i] == '\n') pos[i] = '\0';
                         station = g_path_get_basename (pos);
                         url = g_strdup (pos);
-                        g_message ("path : %s   station : %s", url, station);
+                        //~ g_message ("path : %s   station : %s", url, station);
                         g_hash_table_insert (playlist_table, station, url);
                     }
                 }
@@ -510,11 +510,11 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
     /* ラジオ局一覧 (playlist)の読み込み */
     mpvradio_read_playlist ();
 
-    /* mpv スタート */
-    mpvradio_ipc_fork_mpv ();
-
     /* ipc サーバを動かす */
     g_thread_new ("mpvradio", mpvradio_ipc_recv, NULL);
+
+    /* mpv スタート */
+    mpvradio_ipc_fork_mpv ();
 }
 
 static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
