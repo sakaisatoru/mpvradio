@@ -56,7 +56,7 @@ void mpvradio_common_toggle_pause (void)
 {
     char *s;
     int retval = 0;
-    GError *er;
+    GError *er = NULL;
 
     s = mpvradio_ipc_send_and_response (
         "{\"command\": [\"get_property\", \"pause\"]}\x0a");
