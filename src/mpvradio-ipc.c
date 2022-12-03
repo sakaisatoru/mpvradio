@@ -92,7 +92,7 @@ gpointer mpvradio_ipc_recv (gpointer n)
 {
     char *retbuf = NULL;
     int ipc_recv_fd, fd, ret;
-    GError error[1];
+    GError *error = NULL;
     gsize bytes_read;
 
     GIOStatus ch_stat;
@@ -235,8 +235,6 @@ void mpvradio_ipc_fork_mpv (void)
         else if (pid2 == 0) {
             // 孫プロセス
             // 呼び出し元のこのスレッド以外は引き継がない事に注意。
-            //~ xapp_status_icon_set_label (appindicator, gtk_button_get_label (btn));
-            //~ mpvradio_stop_mpv ();
             execlp ("mpv", "mpv", MPVOPTION1, MPVOPTION2, MPVOPTION3, (char*)NULL);
         }
         else {
@@ -339,13 +337,16 @@ int mpvradio_ipc_send (char *message)
 {
     char *s;
     int retval = 0;
-    GError *err[1];
+    GError *err = NULL;
 
     s = mpvradio_ipc_send_and_response (message);
+    if (s == NULL) {
+        return retval;
+    }
 
     JsonParser *parser = json_parser_new ();
     if (json_parser_load_from_data (parser, s, -1, &err) == FALSE) {
-        g_error ("%s   exit mpvradio_ipc_send.",err[0]->message);
+        g_error ("%s   exit mpvradio_ipc_send.",err->message);
         goto exit_this;
     }
 
