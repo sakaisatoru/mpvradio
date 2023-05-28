@@ -144,7 +144,7 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
         GList *curr = g_list_first (playlist_sorted);
         while (curr != NULL) {
             if (curr->data != NULL) {
-                g_print ("station : %s\n", curr->data);
+                //~ g_message ("station : %s", curr->data);
                 url = g_hash_table_lookup (playlist_table, curr->data);
                 menuitem = gtk_menu_item_new_with_label (curr->data);
                 g_signal_connect (menuitem, "activate",
