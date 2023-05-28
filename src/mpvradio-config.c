@@ -36,9 +36,6 @@
 
 #include "mpvradio.h"
 
-/* mpvradio_adduri.c */
-extern void mpvradio_adduri_quicktune (GtkWidget *);
-
 
 void detach_config_file (GKeyFile *kf)
 {
