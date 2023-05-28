@@ -541,6 +541,12 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
     mpvradio_ipc_fork_mpv ();
 }
 
+static void test_g_free (void *hoge)
+{
+	g_message ("test_g_free : 0x%x  %s", hoge, hoge);
+	g_free (hoge);
+}
+
 static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 {
     GList *windows;
@@ -568,7 +574,8 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     mpvradio_ipc_remove_socket ();
     g_object_unref (infomessage);
 
-    g_list_free_full (playlist_sorted, g_free);
+    //~ g_list_free_full (playlist_sorted, g_free);
+    g_list_free_full (playlist_sorted, test_g_free);
     g_message ("shutdown now.");
 }
 
