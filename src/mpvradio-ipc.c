@@ -52,6 +52,8 @@
 #define MPVOPTION1      "--idle"
 #define MPVOPTION2      "--input-ipc-server="MPV_SOCKET_PATH
 #define MPVOPTION3      "--no-video"
+#define MPVOPTION4      "--no-cache"
+#define MPVOPTION5      "--stream-buffer-size=256KiB"
 
 #define READ_BUFFER_SIZE    1024
 
@@ -235,7 +237,7 @@ void mpvradio_ipc_fork_mpv (void)
         else if (pid2 == 0) {
             // 孫プロセス
             // 呼び出し元のこのスレッド以外は引き継がない事に注意。
-            execlp ("mpv", "mpv", MPVOPTION1, MPVOPTION2, MPVOPTION3, (char*)NULL);
+            execlp ("mpv", "mpv", MPVOPTION1, MPVOPTION2, MPVOPTION3, MPVOPTION4, MPVOPTION5, (char*)NULL);
         }
         else {
             // 子プロセスは親プロセスにpipeで pidを返してすぐに終了、

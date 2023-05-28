@@ -94,6 +94,25 @@ menu_quit_cb (GtkWidget *menuitem, gpointer app)
     g_application_quit (G_APPLICATION (app));
 }
 
+extern GHashTable *playlist_table;  // main.c
+extern GList *playlist_sorted;
+
+/*
+ * 選局メニューのコールバック
+ */
+static void
+_mpvradio_statusicon_menuitem_cb (GtkWidget *menuitem,
+                                                gpointer data)
+{
+    char *label = gtk_menu_item_get_label (menuitem);
+    char *message;
+    char *url = g_hash_table_lookup (playlist_table, label);
+    mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
+    message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
+
+    mpvradio_ipc_send (message);
+    g_free (message);
+}
 
 static void
 mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
@@ -109,27 +128,35 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
     if (button == 3) {
         /* メニュー作成 */
         menu = gtk_menu_new ();
-        menuitem = gtk_menu_item_new_with_label ("pause");
+        menuitem = gtk_menu_item_new_with_label ("⏸ pause");
         g_signal_connect (menuitem, "activate",
             //~ G_CALLBACK (mpvradio_common_cb), mpvradio_common_play);
             G_CALLBACK (mpvradio_common_cb), mpvradio_common_toggle_pause);
         gtk_menu_shell_append (menu, menuitem);
-        menuitem = gtk_menu_item_new_with_label ("stop");
+        menuitem = gtk_menu_item_new_with_label ("⏹ stop");
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (mpvradio_common_cb), mpvradio_common_stop);
-        gtk_menu_shell_append (menu, menuitem);
-        menuitem = gtk_menu_item_new_with_label ("next");
-        g_signal_connect (menuitem, "activate",
-            G_CALLBACK (mpvradio_common_cb), mpvradio_common_next);
-        gtk_menu_shell_append (menu, menuitem);
-        menuitem = gtk_menu_item_new_with_label ("prev");
-        g_signal_connect (menuitem, "activate",
-            G_CALLBACK (mpvradio_common_cb), mpvradio_common_prev);
         gtk_menu_shell_append (menu, menuitem);
 
         gtk_menu_shell_append (menu, gtk_separator_menu_item_new ());
 
-        menuitem = gtk_menu_item_new_with_label ("quit");
+        gpointer url;
+        GList *curr = g_list_first (playlist_sorted);
+        while (curr != NULL) {
+            if (curr->data != NULL) {
+                g_print ("station : %s\n", curr->data);
+                url = g_hash_table_lookup (playlist_table, curr->data);
+                menuitem = gtk_menu_item_new_with_label (curr->data);
+                g_signal_connect (menuitem, "activate",
+                    G_CALLBACK (_mpvradio_statusicon_menuitem_cb), NULL);
+                gtk_menu_shell_append (menu, menuitem);
+            }
+            curr = g_list_next (curr);
+        }
+
+        gtk_menu_shell_append (menu, gtk_separator_menu_item_new ());
+
+        menuitem = gtk_menu_item_new_with_label ("🚪 quit");
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (menu_quit_cb), app);
         gtk_menu_shell_append (menu, menuitem);

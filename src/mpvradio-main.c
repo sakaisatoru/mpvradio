@@ -128,11 +128,12 @@ static void radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
 /*
  * playlist の内容をハッシュテーブルに格納する
  */
-static GHashTable *playlist_table;
+GHashTable *playlist_table;
+GList *playlist_sorted = NULL;
 void mpvradio_read_playlist (void)
 {
-    gchar buf[256], *pos, *station, *url, **playlist, **pl, *fn;
-    int i;
+    gchar buf[256], *pos, *station, **playlist, **pl, *fn;
+    int i, flag = FALSE;
 
     playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -150,18 +151,39 @@ void mpvradio_read_playlist (void)
                     }
                 }
                 pos = g_strchug (buf);
-                if (pos[0] != '#') {
-                    // コメント行は飛ばす
-                    i = strlen(pos) - 1;
-                    // 空行は飛ばす
-                    if (i > 0) {
-                        if (pos[i] == '\n') pos[i] = '\0';
-                        station = g_path_get_basename (pos);
-                        url = g_strdup (pos);
-                        //~ g_message ("path : %s   station : %s", url, station);
-                        g_hash_table_insert (playlist_table, station, url);
+
+                // Extended M3U
+                if (sscanf (pos, "#EXTINF:%d,%*[A-Za-z0-9()_. ] / %*s\n", &i)) {
+                    char *st = strrchr (pos, '/');
+                    if (st != NULL) {
+                        st++;
+                        while (*st == ' ' || *st == '\t') st++;
+                        char *tail = strrchr (st, '\n');
+                        if (tail != NULL) *tail = '\0';
+                        station = g_strdup (st);
+                        flag = TRUE;
+                    }
+                    else {
+                        station = NULL;
+                        flag = FALSE;
+                    }
+                    continue;
+                }
+
+                if (flag) {
+                    // 直前に #EXTINFがあれば URLとして読み込む
+                    if (*pos != '#') {
+                        char *tail = strrchr (pos, '\n');
+                        if (tail != NULL) *tail = '\0';
+                        if (station != NULL) {
+                            g_hash_table_insert (playlist_table, station, g_strdup (pos));
+                            // ソート用のリストに追加する
+                            playlist_sorted = g_list_append (playlist_sorted, station);
+                        }
+                        flag = FALSE;
                     }
                 }
+
             }
             fclose (fp);
         }
@@ -172,6 +194,7 @@ void mpvradio_read_playlist (void)
         pl++;
     }
     g_strfreev (playlist);
+    playlist_sorted = g_list_sort (playlist_sorted, strcmp);
 }
 
 
@@ -186,7 +209,6 @@ static GtkWidget *selectergrid_new (void)
     gpointer station, url;
 
     gint x_margin = 1, y_margin = 1;
-    char *playlist[] = {"00_radiko", "radio"};
 
     /*
      * playlist_table をチェックして選局ボタンを並べる
@@ -195,17 +217,20 @@ static GtkWidget *selectergrid_new (void)
     gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), x_margin);
     gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), y_margin);
 
-    g_hash_table_iter_init (&iter, playlist_table);
+    GList *curr = g_list_first (playlist_sorted);
+    while (curr != NULL) {
+        if (curr->data != NULL) {
+            url = g_hash_table_lookup (playlist_table, curr->data);
+            btn = mpvradio_stationbutton_new ();
+            gtk_button_set_label (btn, curr->data);
+            mpvradio_stationbutton_set_uri (btn, url);
+            gtk_widget_set_size_request (btn, button_width, button_height);
+            g_signal_connect (G_OBJECT(btn), "clicked",
+                G_CALLBACK(_mpvradio_radiopanel_clicked_cb), NULL);
 
-    while (g_hash_table_iter_next (&iter, &station, &url)) {
-        btn = mpvradio_stationbutton_new ();
-        gtk_button_set_label (btn, station);
-        mpvradio_stationbutton_set_uri (btn, url);
-        gtk_widget_set_size_request (btn, button_width, button_height);
-        g_signal_connect (G_OBJECT(btn), "clicked",
-            G_CALLBACK(_mpvradio_radiopanel_clicked_cb), NULL);
-
-        gtk_container_add (GTK_CONTAINER(grid), btn);
+            gtk_container_add (GTK_CONTAINER(grid), btn);
+        }
+        curr = g_list_next (curr);
     }
 
     return grid;
@@ -222,7 +247,6 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     struct mpd_song *sn;
     struct mpd_status *st;
 
-    char *playlist[] = {"00_radiko", "radio"};
     int i, width, height;
     double vol = 0.5;
 
@@ -543,6 +567,8 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     mpvradio_ipc_kill_mpv ();
     mpvradio_ipc_remove_socket ();
     g_object_unref (infomessage);
+
+    g_list_free_full (playlist_sorted, g_free);
     g_message ("shutdown now.");
 }
 
