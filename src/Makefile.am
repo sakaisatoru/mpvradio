@@ -9,13 +9,13 @@ mpvradio_SOURCES = \
 	mpvradio-statusicon.h	\
 	mpvradio-adduri.c	\
 	mpvradio-config.c	\
-	mpvradio-notify.c	\
 	mpvradio.h			\
 	mpvradio-main.c	\
 	mpvradio-common.c	\
 	mpvradio-ipc.c	\
 	mpvradio-ipc.h
 
+#	mpvradio-notify.c
 
 mpvradio_CFLAGS  =  $(GTK_CFLAGS) $(JSONGLIB_CFLAGS) $(NOTIFY_CFLAGS) $(XAPP_CFLAGS)
 mpvradio_LDADD   =  $(INTLLIBS) $(GTK_LIBS) $(JSONGLIB_LIBS) $(NOTIFY_LIBS) $(XAPP_LIBS)

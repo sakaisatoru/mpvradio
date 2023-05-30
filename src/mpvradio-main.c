@@ -37,8 +37,8 @@
 #include "gtk/gtk.h"
 #include "glib.h"
 #include "gdk/gdkkeysyms.h"
-#include "libnotify/notification.h"
-#include "libnotify/notify.h"
+//~ #include "libnotify/notification.h"
+//~ #include "libnotify/notify.h"
 
 #include "libxapp/xapp-status-icon.h"
 #include "libxapp/xapp-preferences-window.h"
@@ -49,7 +49,7 @@
 #include "mpvradio-statusicon.h"
 #include "mpvradio-ipc.h"
 
-NotifyNotification *notifi;         // デスクトップ通知
+//~ NotifyNotification *notifi;         // デスクトップ通知
 GtkWindow *radikopanel;
 GtkWindow *selectergrid;
 XAppStatusIcon *appindicator;       // LinuxMint 専用
@@ -84,7 +84,7 @@ extern GKeyFile *load_config_file (void);
 extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 
 /* mpvradio-notify.c */
-extern void mpvradio_notify_currentsong (void);
+//~ extern void mpvradio_notify_currentsong (void);
 
 
 /*
@@ -522,8 +522,8 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
     infomessage = gtk_entry_buffer_new ("mpvradio",-1);
 
     /* デスクトップ通知の準備 */
-    notify_init (PACKAGE);
-    notifi = notify_notification_new (PACKAGE, "a mpd client for radio", mpvradioICON);
+    //~ notify_init (PACKAGE);
+    //~ notifi = notify_notification_new (PACKAGE, "a mpd client for radio", mpvradioICON);
 
     /* フラグの初期化 */
     mpvradio_recv_dead = TRUE;
@@ -560,8 +560,8 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 
     save_config_file (kconf);
 
-    g_object_unref (notifi);
-    notify_uninit ();
+    //~ g_object_unref (notifi);
+    //~ notify_uninit ();
     detach_config_file (kconf);
 
 
