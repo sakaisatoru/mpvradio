@@ -156,7 +156,9 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
 
         gtk_menu_shell_append (menu, gtk_separator_menu_item_new ());
 
-        menuitem = gtk_menu_item_new_with_label ("🚪 quit");
+        //~ menuitem = gtk_menu_item_new_with_label ("🚪 quit");
+        // gtk_image_menu_item_new_from_stockは3.10以降非推奨
+        menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT,NULL);
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (menu_quit_cb), app);
         gtk_menu_shell_append (menu, menuitem);

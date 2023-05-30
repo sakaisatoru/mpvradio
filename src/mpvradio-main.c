@@ -172,13 +172,15 @@ void mpvradio_read_playlist (void)
 
                 if (flag) {
                     // 直前に #EXTINFがあれば URLとして読み込む
-                    if (*pos != '#') {
+                    if (*pos != '#') {  // コメント避け
                         char *tail = strrchr (pos, '\n');
                         if (tail != NULL) *tail = '\0';
                         if (station != NULL) {
                             g_hash_table_insert (playlist_table, station, g_strdup (pos));
                             // ソート用のリストに追加する
-                            playlist_sorted = g_list_append (playlist_sorted, station);
+                            // hashテーブルに格納した局名は、hashテーブル開放時に破壊されるので
+                            // リスト用に新規に確保する。
+                            playlist_sorted = g_list_append (playlist_sorted, g_strdup(station));
                         }
                         flag = FALSE;
                     }
@@ -541,12 +543,6 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
     mpvradio_ipc_fork_mpv ();
 }
 
-static void test_g_free (void *hoge)
-{
-	g_message ("test_g_free : 0x%x  %s", hoge, hoge);
-	g_free (hoge);
-}
-
 static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 {
     GList *windows;
@@ -568,14 +564,14 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     notify_uninit ();
     detach_config_file (kconf);
 
-    g_hash_table_destroy (playlist_table);
 
     mpvradio_ipc_kill_mpv ();
     mpvradio_ipc_remove_socket ();
     g_object_unref (infomessage);
 
-    //~ g_list_free_full (playlist_sorted, g_free);
-    g_list_free_full (playlist_sorted, test_g_free);
+    g_hash_table_destroy (playlist_table);
+    g_list_free_full (playlist_sorted, g_free);
+
     g_message ("shutdown now.");
 }
 
