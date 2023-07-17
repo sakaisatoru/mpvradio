@@ -128,12 +128,14 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
     if (button == 3) {
         /* メニュー作成 */
         menu = gtk_menu_new ();
-        menuitem = gtk_menu_item_new_with_label ("⏸ pause");
+        menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_MEDIA_PLAY,NULL);
+        //~ menuitem = gtk_menu_item_new_with_label ("⏸ pause");
         g_signal_connect (menuitem, "activate",
             //~ G_CALLBACK (mpvradio_common_cb), mpvradio_common_play);
             G_CALLBACK (mpvradio_common_cb), mpvradio_common_toggle_pause);
         gtk_menu_shell_append (menu, menuitem);
-        menuitem = gtk_menu_item_new_with_label ("⏹ stop");
+        menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_MEDIA_STOP,NULL);
+        //~ menuitem = gtk_menu_item_new_with_label ("⏹ stop");
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (mpvradio_common_cb), mpvradio_common_stop);
         gtk_menu_shell_append (menu, menuitem);
