@@ -50,6 +50,7 @@ struct _mpvradioStationbutton
   mpvradioStationbuttonPrivate *priv;
 
   gchar                    *uri;
+  GtkFlowBoxChild          *container;
 };
 
 GType             mpvradio_stationbutton_get_type       (void) G_GNUC_CONST;
@@ -58,6 +59,9 @@ mpvradioStationbutton *mpvradio_stationbutton_new            (void);
 char              *mpvradio_stationbutton_get_uri       (mpvradioStationbutton *btn);
 void               mpvradio_stationbutton_set_uri       (mpvradioStationbutton *btn,
                                                      gchar *uri);
+void               mpvradio_stationbutton_set_container       (mpvradioStationbutton *btn,
+                                                     GtkFlowBoxChild          *container);
+GtkFlowBoxChild   *mpvradio_stationbutton_get_container       (mpvradioStationbutton *btn);
 
 G_END_DECLS
 

@@ -6,6 +6,9 @@ desktop_DATA     = $(desktop_in_files:.desktop.in=.desktop)
 pixmapsdir       = $(datadir)/pixmaps
 pixmaps_DATA     = mpvradio.png
 
+pluginsdir		 = $(datadir)/mpvradio/plugins
+plugins_DATA	 = radiko.py
+
 EXTRA_DIST = \
-	$(pixmaps_DATA)
+	$(pixmaps_DATA) $(plugins_DATA)
 

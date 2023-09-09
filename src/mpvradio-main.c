@@ -89,6 +89,7 @@ extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 
 /*
  * 選局ボタンのコールバック
+ * url を見て必要であればプラグインを呼び出す
  */
 static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
                                                 gpointer data)
@@ -96,10 +97,40 @@ static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
     char *url = mpvradio_stationbutton_get_uri (btn);
     char *message;
 
-    mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
-    message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
-    mpvradio_ipc_send (message);
-    g_free (message);
+    gchar *scheme = g_uri_parse_scheme (url);
+    //~ g_print ("scheme:%s\n", scheme);
+
+    if (!strcmp (scheme, "plugin")) {
+        // url の先頭がpluginであれば呼び出しにかかる
+        gchar *station = g_path_get_basename (url); // basename をplugin の引数にする
+        //~ g_print ("station:%s\n", station);
+
+        gchar *p_path = g_path_get_dirname (url);
+        gchar **plugin = g_strsplit (p_path, ":", 2);
+        if (plugin != NULL) {
+            gchar *command = g_strdup_printf ("%s %s", plugin[1], station);
+            system (command);
+            //~ g_print ("plugin :%s\n", command);
+            g_free (command);
+            g_strfreev (plugin);
+        }
+
+        g_free (p_path);
+        g_free (station);
+
+    }
+    else {
+        // url や playlist であればそのまま mpv に送る
+        mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
+        message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
+        mpvradio_ipc_send (message);
+        g_free (message);
+    }
+
+    gtk_flow_box_select_child (data,
+        mpvradio_stationbutton_get_container (btn));
+
+    g_free (scheme);
 }
 
 
@@ -199,8 +230,6 @@ void mpvradio_read_playlist (void)
     playlist_sorted = g_list_sort (playlist_sorted, strcmp);
 }
 
-
-
 /*
  * 選局ボタンを並べたgtk_flow_boxを返す
  */
@@ -228,9 +257,17 @@ static GtkWidget *selectergrid_new (void)
             mpvradio_stationbutton_set_uri (btn, url);
             gtk_widget_set_size_request (btn, button_width, button_height);
             g_signal_connect (G_OBJECT(btn), "clicked",
-                G_CALLBACK(_mpvradio_radiopanel_clicked_cb), NULL);
+                G_CALLBACK(_mpvradio_radiopanel_clicked_cb), grid);
 
-            gtk_container_add (GTK_CONTAINER(grid), btn);
+            gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
+
+            // そのままでは子ウィジェットにフォーカスが移動しないので
+            // mpvradio_stationbutton に GtkFlowBoxChild を
+            // 渡しておく
+            GtkFlowBoxChild *child =
+                gtk_flow_box_get_child_at_index (grid, 0);
+            mpvradio_stationbutton_set_container (btn, child);
+
         }
         curr = g_list_next (curr);
     }

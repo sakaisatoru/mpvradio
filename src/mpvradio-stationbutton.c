@@ -117,3 +117,17 @@ char
 {
     return button->uri;
 }
+
+void
+mpvradio_stationbutton_set_container (mpvradioStationbutton *button, GtkFlowBoxChild *container)
+{
+    button->container = container;
+}
+
+GtkFlowBoxChild
+*mpvradio_stationbutton_get_container (mpvradioStationbutton *button)
+{
+    return button->container;
+}
+
+
