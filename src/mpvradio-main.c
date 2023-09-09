@@ -108,7 +108,8 @@ static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
         gchar *p_path = g_path_get_dirname (url);
         gchar **plugin = g_strsplit (p_path, ":", 2);
         if (plugin != NULL) {
-            gchar *command = g_strdup_printf ("%s %s", plugin[1], station);
+            gchar *command = g_strdup_printf ("%s/mpvradio/plugins%s %s",
+                                        DATADIR, plugin[1], station);
             system (command);
             //~ g_print ("plugin :%s\n", command);
             g_free (command);

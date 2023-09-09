@@ -1,0 +1,34 @@
+#EXTM3U
+
+#EXTINF:-1,Tokyo / TBSラジオ
+plugin:/radiko.py/TBS
+#EXTINF:-1,Tokyo / 文化放送
+plugin:/radiko.py/QRR
+#EXTINF:-1,Tokyo / ニッポン放送
+plugin:/radiko.py/LFR
+#EXTINF:-1,Tokyo / interfm
+plugin:/radiko.py/INT
+#EXTINF:-1,Tokyo / TOKYO FM
+plugin:/radiko.py/FMT
+#EXTINF:-1,Tokyo / J-WAVE
+plugin:/radiko.py/FMJ
+#EXTINF:-1,Tokyo / ラジオ日本
+plugin:/radiko.py/JORF
+#EXTINF:-1,Chiba / bayfm78
+plugin:/radiko.py/BAYFM78
+#EXTINF:-1,Saitama / NACK5
+plugin:/radiko.py/NACK5
+#EXTINF:-1,Kanagawa / ＦＭヨコハマ
+plugin:/radiko.py/YFM
+#EXTINF:-1,Ibaraki / LuckyFM 茨城放送
+plugin:/radiko.py/IBS
+#EXTINF:-1,Tokyo / NHKラジオ第1（東京）
+plugin:/radiko.py/JOAK
+#EXTINF:-1,Tokyo / ラジオNIKKEI第1
+plugin:/radiko.py/RN1
+#EXTINF:-1,Tokyo / ラジオNIKKEI第2
+plugin:/radiko.py/RN2
+#EXTINF:-1,Chiba / 放送大学
+plugin:/radiko.py/HOUSOU-DAIGAKU
+#EXTINF:-1,Tokyo / NHK-FM（東京）
+plugin:/radiko.py/JOAK-FM

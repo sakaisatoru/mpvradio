@@ -1,0 +1,25 @@
+#EXTM3U
+
+#https://nhkradioakr2-i.akamaihd.net/hls/live/511929/1-r2/1-r2-01.m3u8
+#https://nhkradioakr1-i.akamaihd.net/hls/live/511633/1-r1/1-r1-01.m3u8
+#https://nhkradioakfm-i.akamaihd.net/hls/live/512290/1-fm/1-fm-01.m3u8
+#EXTINF:-1,Saitama / スマイルラジオ
+mms://hdv.nkansai.tv/smile
+#http://20813.live.streamtheworld.com/AFNP_TKO
+#EXTINF:-1,USA / AFN TOKYO
+http://14103.live.streamtheworld.com/AFNP_TKO.mp3
+#http://15363.live.streamtheworld.com/AFN_GRV.mp3
+#EXTINF:-1,USA / AFN Groove
+http://17813.live.streamtheworld.com/AFN_GRV.mp3
+#http://20423.live.streamtheworld.com/AFN_JOEP.mp3
+#EXTINF:-1,USA / AFN Joe Radio
+http://13693.live.streamtheworld.com/AFN_JOE.mp3
+#http://20813.live.streamtheworld.com:80/AFN_HOTP_SC
+#EXTINF:-1,radioparadise.com(main mix) / radioparadaise.com(main mix,320k,aac) 
+http://stream.radioparadise.com/aac-320
+#EXTINF:-1,radioparadise.com(mellow mix) / radioparadaise.com(mellow mix,320k,aac) 
+http://stream.radioparadise.com/mellow-320
+#EXTINF:-1,radioparadise.com(rock mix) / radioparadaise.com(rock mix,320k,aac) 
+http://stream.radioparadise.com/rock-320
+#EXTINF:-1,radioparadise.com(global mix) / radioparadaise.com(global mix,320k,aac) 
+http://stream.radioparadise.com/global-320

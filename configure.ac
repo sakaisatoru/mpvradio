@@ -38,4 +38,6 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  po/Makefile.in
                  data/Makefile])
+
 AC_OUTPUT
+

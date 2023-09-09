@@ -1,6 +1,6 @@
 bin_PROGRAMS = mpvradio
 
-AM_CPPFLAGS = -DICONDIR=\"$(datadir)/pixmaps\" -DLOCALEDIR=\"$(localedir)\" -DGETTEXT_PACKAGE=\""$(GETTEXT_PACKAGE)"\"
+AM_CPPFLAGS = -DDATADIR=\"$(datadir)\" -DICONDIR=\"$(datadir)/pixmaps\" -DLOCALEDIR=\"$(localedir)\" -DGETTEXT_PACKAGE=\""$(GETTEXT_PACKAGE)"\"
 
 mpvradio_SOURCES = \
 	mpvradio-stationbutton.c	\

@@ -9,6 +9,10 @@ pixmaps_DATA     = mpvradio.png
 pluginsdir		 = $(datadir)/mpvradio/plugins
 plugins_DATA	 = radiko.py
 
+playlistsdir	 = $(datadir)/mpvradio/playlists
+playlists_DATA	 = 00_radiko.m3u radio.m3u
+
+
 EXTRA_DIST = \
-	$(pixmaps_DATA) $(plugins_DATA)
+	$(pixmaps_DATA) $(plugins_DATA) $(playlists_DATA)
 

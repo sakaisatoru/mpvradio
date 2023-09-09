@@ -72,18 +72,14 @@ GKeyFile *load_config_file (void)
     if (g_key_file_load_from_file(kf, conf_file_name,
             G_KEY_FILE_NONE, NULL) == FALSE) {
 
-        gchar *homedir;
-        if ((homedir=getenv("HOME")) == NULL) {
-            homedir = "/usr/share";
-        }
         gchar *default_conf = g_strdup_printf (
             "[%s]\n" \
             "version=%s\n" \
             "\n"    \
             "[playlist]\n"   \
-            "radiko=/var/lib/mpd/playlists/00_radiko.m3u\n" \
-            "other=%s/ミュージック/radio.m3u\n" \
-            "\n", PACKAGE, PACKAGE_VERSION, homedir);
+            "radiko=%s/mpvradio/playlists/00_radiko.m3u\n" \
+            "other=%s/mpvradio/playlists/radio.m3u\n" \
+            "\n", PACKAGE, PACKAGE_VERSION, DATADIR, DATADIR);
 
         g_key_file_load_from_data (kf, default_conf, -1,
             G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS,
