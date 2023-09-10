@@ -173,7 +173,7 @@ void mpvradio_read_playlist (void)
     pl = playlist;
     while (*pl != NULL) {
         fn = g_key_file_get_value (kconf, "playlist", *pl, NULL);
-        g_message (fn);
+        //~ g_message (fn);
         FILE *fp = fopen (fn, "r");
         if (fp != NULL) {
             while (!feof(fp)) {
@@ -277,6 +277,44 @@ static GtkWidget *selectergrid_new (void)
 }
 
 /*
+ * ドラッグアンドドロップでファイル名を受け取ってmpvへ送る
+ */
+static void radiopanel_dd_received (GtkWidget *widget,
+                                    GdkDragContext *context,
+                                    gint        x,
+                                    gint        y,
+                                    GtkSelectionData *data,
+                                    guint       info,
+                                    guint       time,
+                                    gpointer    user_data)
+{
+    gchar **filenames = NULL, *filename, *message;
+
+    filenames = g_uri_list_extract_uris((const gchar *)gtk_selection_data_get_data (data));
+    if (filenames == NULL) {
+        //~ g_print ("error");
+        gtk_drag_finish (context, FALSE, FALSE, time);
+        return;
+    }
+
+    for (int iter = 0; filenames[iter] != NULL; iter++) {
+        filename = g_filename_from_uri (filenames[iter], NULL, NULL);
+        //~ g_print("detect : %s\n",filename);
+
+        // 処理
+        message = g_strdup_printf (
+                    "{\"command\": [\"loadfile\",\"%s\",\"append-play\"]}\x0a",
+                                                            filename);
+        mpvradio_ipc_send (message);
+        g_free (message);
+
+        g_free (filename);
+    }
+    g_strfreev (filenames);
+    gtk_drag_finish (context, TRUE, FALSE, time);
+}
+
+/*
  * 選局パネル(ウィンドウ)の作成
  */
 GtkWindow *mpvradio_radiopanel (GtkApplication *application)
@@ -303,6 +341,14 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
                         G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
                         G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+
+    // プレイリストをDnDで受け取るための準備
+    static GtkTargetEntry te[] = {
+        {"text/uri-list", 0, 0}
+    };
+    gtk_drag_dest_set (window, GTK_DEST_DEFAULT_ALL, te, 1, GDK_ACTION_COPY);
+    g_signal_connect (G_OBJECT(window), "drag-data-received",
+                        G_CALLBACK(radiopanel_dd_received), NULL);
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();
@@ -382,6 +428,7 @@ fileopen_activated (GSimpleAction *action,
     GList *windows;
     GtkWidget *dialog;
     gint res;
+    gchar *filename, *message;
 
     GtkFileChooserAction act = GTK_FILE_CHOOSER_ACTION_OPEN;
 
@@ -398,13 +445,15 @@ fileopen_activated (GSimpleAction *action,
         res = gtk_dialog_run (GTK_DIALOG(dialog));
         if (res == GTK_RESPONSE_ACCEPT) {
             GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-            char *filename = gtk_file_chooser_get_filename (chooser);
+            filename = gtk_file_chooser_get_filename (chooser);
             // 以下の処理が躓くとダイアログが閉じないので先に閉じる
             gtk_widget_destroy (dialog);
 
             // 処理
-            char *message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", filename);
-            g_message ("file name : %s", filename);
+            message = g_strdup_printf (
+                    "{\"command\": [\"loadfile\",\"%s\",\"append-play\"]}\x0a",
+                                                            filename);
+            //~ g_message ("file name : %s", filename);
             g_free (filename);
             mpvradio_ipc_send (message);
             g_free (message);

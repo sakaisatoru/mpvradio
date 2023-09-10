@@ -345,7 +345,7 @@ int mpvradio_ipc_send (char *message)
     if (s == NULL) {
         return retval;
     }
-
+//~ g_message(s);
     JsonParser *parser = json_parser_new ();
     if (json_parser_load_from_data (parser, s, -1, &err) == FALSE) {
         g_error ("%s   exit mpvradio_ipc_send.",err->message);
