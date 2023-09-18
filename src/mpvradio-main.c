@@ -128,9 +128,6 @@ static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
         g_free (message);
     }
 
-    gtk_flow_box_select_child (data,
-        mpvradio_stationbutton_get_container (btn));
-
     g_free (scheme);
 }
 
@@ -232,45 +229,72 @@ void mpvradio_read_playlist (void)
 }
 
 /*
+ * 子ウィジェットがstationbuttonだったら、clickedイベントを起こす
+ */
+static
+void checkchild (GtkWidget *widget, gpointer data)
+{
+    if (mpvradio_IS_STATIONBUTTON (widget)) {
+        //~ g_print ("station button.");
+        g_signal_emit_by_name (widget, "clicked");
+    }
+}
+
+/*
+ * flow_box の選択された要素上で何か起きた
+ */
+static
+void child_activated_cb (GtkFlowBox      *box,
+                           GtkFlowBoxChild *child,
+                           gpointer         user_data)
+{
+    //~ g_print ("child-activated. %d\n", gtk_flow_box_child_get_index (child));
+    gtk_container_foreach (GTK_CONTAINER(child), checkchild, NULL);
+}
+
+static
+void selected_children_changed_cb (GtkFlowBox      *box,
+                           gpointer         user_data)
+{
+    g_print ("selected_children_changed detect. \n");
+}
+
+/*
  * 選局ボタンを並べたgtk_flow_boxを返す
  */
 static GtkWidget *selectergrid_new (void)
 {
-    GtkWidget *btn, *grid = NULL;
+    GtkWidget *btn, *grid;
     GHashTableIter iter;
     gpointer station, url;
-
-    gint x_margin = 1, y_margin = 1;
 
     /*
      * playlist_table をチェックして選局ボタンを並べる
      */
     grid = gtk_flow_box_new ();
-    gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), x_margin);
-    gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), y_margin);
+    //~ gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(grid),GTK_SELECTION_NONE);
+    gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(grid),GTK_SELECTION_SINGLE);
+    gtk_flow_box_set_homogeneous (GTK_FLOW_BOX(grid), TRUE);
+    gtk_flow_box_set_activate_on_single_click (GTK_FLOW_BOX(grid), TRUE);
+    // キー押下で選局ボタンにイベントを送るための準備
+    g_signal_connect (G_OBJECT(grid), "child-activated",
+                G_CALLBACK(child_activated_cb), NULL);
+    g_signal_connect (G_OBJECT(grid), "selected-children-changed",
+                G_CALLBACK(selected_children_changed_cb), NULL);
 
-    GList *curr = g_list_first (playlist_sorted);
-    while (curr != NULL) {
+    GList *curr;
+    int i = 0;
+    for (curr = g_list_first (playlist_sorted);
+                curr != NULL;curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
-            btn = mpvradio_stationbutton_new ();
-            gtk_button_set_label (btn, curr->data);
-            mpvradio_stationbutton_set_uri (btn, url);
+            btn = mpvradio_stationbutton_new_with_data (curr->data, url);
             gtk_widget_set_size_request (btn, button_width, button_height);
             g_signal_connect (G_OBJECT(btn), "clicked",
                 G_CALLBACK(_mpvradio_radiopanel_clicked_cb), grid);
 
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
-
-            // そのままでは子ウィジェットにフォーカスが移動しないので
-            // mpvradio_stationbutton に GtkFlowBoxChild を
-            // 渡しておく
-            GtkFlowBoxChild *child =
-                gtk_flow_box_get_child_at_index (grid, 0);
-            mpvradio_stationbutton_set_container (btn, child);
-
         }
-        curr = g_list_next (curr);
     }
 
     return grid;
@@ -312,6 +336,18 @@ static void radiopanel_dd_received (GtkWidget *widget,
     }
     g_strfreev (filenames);
     gtk_drag_finish (context, TRUE, FALSE, time);
+}
+
+
+GtkEventController *event_c;
+gboolean event_c_cb (GtkEventControllerKey *controller,
+                            guint                  keyval,
+                            guint                  keycode,
+                            GdkModifierType        state,
+                            gpointer               user_data)
+{
+    g_message ("val:%d code:%d",keyval, keycode);
+    return FALSE;
 }
 
 /*
@@ -406,6 +442,13 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     gtk_box_pack_start (box, infobar, FALSE, TRUE, 0);
 
     selectergrid = selectergrid_new ();
+
+//
+    //~ event_c = gtk_event_controller_key_new (selectergrid);
+    //~ g_signal_connect (G_OBJECT(event_c), "key-pressed",
+                        //~ G_CALLBACK(event_c_cb), NULL);
+//
+
     gtk_scale_button_set_value (volbtn, vol);
 
     scroll = gtk_scrolled_window_new (NULL, NULL);

@@ -118,16 +118,15 @@ char
     return button->uri;
 }
 
-void
-mpvradio_stationbutton_set_container (mpvradioStationbutton *button, GtkFlowBoxChild *container)
-{
-    button->container = container;
-}
 
-GtkFlowBoxChild
-*mpvradio_stationbutton_get_container (mpvradioStationbutton *button)
-{
-    return button->container;
-}
 
+mpvradioStationbutton *
+mpvradio_stationbutton_new_with_data (const gchar *label, gchar *u)
+{
+    mpvradioStationbutton *button;
+    button = g_object_new (mpvradio_TYPE_STATIONBUTTON, NULL);
+    button->uri = g_strdup (u);
+    gtk_button_set_label (button, label);
+    return button;
+}
 

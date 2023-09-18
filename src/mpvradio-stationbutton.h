@@ -59,9 +59,8 @@ mpvradioStationbutton *mpvradio_stationbutton_new            (void);
 char              *mpvradio_stationbutton_get_uri       (mpvradioStationbutton *btn);
 void               mpvradio_stationbutton_set_uri       (mpvradioStationbutton *btn,
                                                      gchar *uri);
-void               mpvradio_stationbutton_set_container       (mpvradioStationbutton *btn,
-                                                     GtkFlowBoxChild          *container);
-GtkFlowBoxChild   *mpvradio_stationbutton_get_container       (mpvradioStationbutton *btn);
+
+mpvradioStationbutton *mpvradio_stationbutton_new_with_data (const gchar *label, gchar *u);
 
 G_END_DECLS
 
