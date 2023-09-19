@@ -44,7 +44,7 @@
 #include "libxapp/xapp-preferences-window.h"
 
 #include "mpvradio.h"
-#include "mpvradio-stationbutton.h"
+//~ #include "mpvradio-stationbutton.h"
 #include "mpvradio-common.h"
 #include "mpvradio-statusicon.h"
 #include "mpvradio-ipc.h"
@@ -86,7 +86,7 @@ extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 /* mpvradio-notify.c */
 //~ extern void mpvradio_notify_currentsong (void);
 
-
+#if 0
 /*
  * 選局ボタンのコールバック
  * url を見て必要であればプラグインを呼び出す
@@ -130,7 +130,7 @@ static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
 
     g_free (scheme);
 }
-
+#endif
 
 /*
  * 音量調整

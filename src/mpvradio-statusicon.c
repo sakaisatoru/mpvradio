@@ -43,7 +43,7 @@
 #include "libxapp/xapp-preferences-window.h"
 
 #include "mpvradio.h"
-#include "mpvradio-stationbutton.h"
+//~ #include "mpvradio-stationbutton.h"
 #include "mpvradio-common.h"
 
 /*
