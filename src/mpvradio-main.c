@@ -228,15 +228,65 @@ void mpvradio_read_playlist (void)
     playlist_sorted = g_list_sort (playlist_sorted, strcmp);
 }
 
+
+
+
+static void _test_cb (gchar *url)
+{
+    char *message;
+
+    gchar *scheme = g_uri_parse_scheme (url);
+    //~ g_print ("scheme:%s\n", scheme);
+
+    if (!strcmp (scheme, "plugin")) {
+        // url の先頭がpluginであれば呼び出しにかかる
+        gchar *station = g_path_get_basename (url); // basename をplugin の引数にする
+        //~ g_print ("station:%s\n", station);
+
+        gchar *p_path = g_path_get_dirname (url);
+        gchar **plugin = g_strsplit (p_path, ":", 2);
+        if (plugin != NULL) {
+            gchar *command = g_strdup_printf ("%s/mpvradio/plugins%s %s",
+                                        DATADIR, plugin[1], station);
+            system (command);
+            //~ g_print ("plugin :%s\n", command);
+            g_free (command);
+            g_strfreev (plugin);
+        }
+
+        g_free (p_path);
+        g_free (station);
+
+    }
+    else {
+        // url や playlist であればそのまま mpv に送る
+        mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
+        message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
+        mpvradio_ipc_send (message);
+        g_free (message);
+    }
+
+    g_free (scheme);
+}
+
 /*
  * 子ウィジェットがstationbuttonだったら、clickedイベントを起こす
  */
 static
 void checkchild (GtkWidget *widget, gpointer data)
 {
-    if (mpvradio_IS_STATIONBUTTON (widget)) {
+    //~ if (mpvradio_IS_STATIONBUTTON (widget)) {
         //~ g_print ("station button.");
-        g_signal_emit_by_name (widget, "clicked");
+        //~ g_signal_emit_by_name (widget, "clicked");
+    //~ }
+
+    gpointer url;
+    //~ if (!strcmp (gtk_widget_get_name (widget), "GtkLabel")) {
+    if (GTK_IS_LABEL (widget)) {
+        url = g_hash_table_lookup (playlist_table, gtk_label_get_text (widget));
+        g_print ("label : %s   url : %s\n",
+                    gtk_label_get_text (widget), (gchar*)url);
+        _test_cb ((gchar*)url);
     }
 }
 
@@ -279,6 +329,7 @@ static GtkWidget *selectergrid_new (void)
     // キー押下で選局ボタンにイベントを送るための準備
     g_signal_connect (G_OBJECT(grid), "child-activated",
                 G_CALLBACK(child_activated_cb), NULL);
+    // test
     g_signal_connect (G_OBJECT(grid), "selected-children-changed",
                 G_CALLBACK(selected_children_changed_cb), NULL);
 
@@ -288,11 +339,12 @@ static GtkWidget *selectergrid_new (void)
                 curr != NULL;curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
-            btn = mpvradio_stationbutton_new_with_data (curr->data, url);
-            gtk_widget_set_size_request (btn, button_width, button_height);
-            g_signal_connect (G_OBJECT(btn), "clicked",
-                G_CALLBACK(_mpvradio_radiopanel_clicked_cb), grid);
-
+            //~ btn = mpvradio_stationbutton_new_with_data (curr->data, url);
+            //~ gtk_widget_set_size_request (btn, button_width, button_height);
+            //~ g_signal_connect (G_OBJECT(btn), "clicked",
+                //~ G_CALLBACK(_mpvradio_radiopanel_clicked_cb), grid);
+            btn = gtk_label_new (curr->data);
+            gtk_widget_set_size_request (btn, -1, 48);
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
         }
     }
