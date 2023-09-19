@@ -3,8 +3,6 @@ bin_PROGRAMS = mpvradio
 AM_CPPFLAGS = -DDATADIR=\"$(datadir)\" -DICONDIR=\"$(datadir)/pixmaps\" -DLOCALEDIR=\"$(localedir)\" -DGETTEXT_PACKAGE=\""$(GETTEXT_PACKAGE)"\"
 
 mpvradio_SOURCES = \
-	mpvradio-stationbutton.c	\
-	mpvradio-stationbutton.h	\
 	mpvradio-statusicon.c	\
 	mpvradio-statusicon.h	\
 	mpvradio-adduri.c	\
@@ -16,6 +14,8 @@ mpvradio_SOURCES = \
 	mpvradio-ipc.h
 
 #	mpvradio-notify.c
+#	mpvradio-stationbutton.c
+#	mpvradio-stationbutton.h
 
 mpvradio_CFLAGS  =  $(GTK_CFLAGS) $(JSONGLIB_CFLAGS) $(NOTIFY_CFLAGS) $(XAPP_CFLAGS)
 mpvradio_LDADD   =  $(INTLLIBS) $(GTK_LIBS) $(JSONGLIB_LIBS) $(NOTIFY_LIBS) $(XAPP_LIBS)
