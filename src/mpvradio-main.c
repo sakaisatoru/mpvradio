@@ -37,19 +37,15 @@
 #include "gtk/gtk.h"
 #include "glib.h"
 #include "gdk/gdkkeysyms.h"
-//~ #include "libnotify/notification.h"
-//~ #include "libnotify/notify.h"
 
 #include "libxapp/xapp-status-icon.h"
 #include "libxapp/xapp-preferences-window.h"
 
 #include "mpvradio.h"
-//~ #include "mpvradio-stationbutton.h"
 #include "mpvradio-common.h"
 #include "mpvradio-statusicon.h"
 #include "mpvradio-ipc.h"
 
-//~ NotifyNotification *notifi;         // デスクトップ通知
 GtkWindow *radikopanel;
 GtkWindow *selectergrid;
 XAppStatusIcon *appindicator;       // LinuxMint 専用
@@ -68,8 +64,8 @@ static gboolean mpvradio_recv_stop;
 static GtkActionGroup *actions;
 static gboolean mpvradio_connection_in;
 
-static const gint button_width = 200;
-static const gint button_height = 70;
+static const gint button_width = 100;
+static const gint button_height = 48;
 
 
 /* mpvradio_adduri.c */
@@ -83,54 +79,6 @@ extern void save_config_file (GKeyFile *);
 extern GKeyFile *load_config_file (void);
 extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 
-/* mpvradio-notify.c */
-//~ extern void mpvradio_notify_currentsong (void);
-
-#if 0
-/*
- * 選局ボタンのコールバック
- * url を見て必要であればプラグインを呼び出す
- */
-static void _mpvradio_radiopanel_clicked_cb (mpvradioStationbutton *btn,
-                                                gpointer data)
-{
-    char *url = mpvradio_stationbutton_get_uri (btn);
-    char *message;
-
-    gchar *scheme = g_uri_parse_scheme (url);
-    //~ g_print ("scheme:%s\n", scheme);
-
-    if (!strcmp (scheme, "plugin")) {
-        // url の先頭がpluginであれば呼び出しにかかる
-        gchar *station = g_path_get_basename (url); // basename をplugin の引数にする
-        //~ g_print ("station:%s\n", station);
-
-        gchar *p_path = g_path_get_dirname (url);
-        gchar **plugin = g_strsplit (p_path, ":", 2);
-        if (plugin != NULL) {
-            gchar *command = g_strdup_printf ("%s/mpvradio/plugins%s %s",
-                                        DATADIR, plugin[1], station);
-            system (command);
-            //~ g_print ("plugin :%s\n", command);
-            g_free (command);
-            g_strfreev (plugin);
-        }
-
-        g_free (p_path);
-        g_free (station);
-
-    }
-    else {
-        // url や playlist であればそのまま mpv に送る
-        mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
-        message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
-        mpvradio_ipc_send (message);
-        g_free (message);
-    }
-
-    g_free (scheme);
-}
-#endif
 
 /*
  * 音量調整
@@ -230,6 +178,25 @@ void mpvradio_read_playlist (void)
 
 
 
+/*
+ * スワイプの実装
+ */
+static gdouble swipe_x = 0;
+static gdouble swipe_y = 0;
+static void
+swipe_gesture_swept (GtkGestureSwipe *gesture,
+                     gdouble          velocity_x,
+                     gdouble          velocity_y,
+                     GtkWidget       *widget)
+{
+  swipe_x = velocity_x / 10;
+  swipe_y = velocity_y / 10;
+  g_print ("swipe_x : %f  swipe_y : %f\n", swipe_x, swipe_y);
+  gtk_widget_queue_draw (widget);
+}
+
+
+
 
 static void _test_cb (gchar *url)
 {
@@ -270,18 +237,12 @@ static void _test_cb (gchar *url)
 }
 
 /*
- * 子ウィジェットがstationbuttonだったら、clickedイベントを起こす
+ * 子ウィジェットが GtkLabel だったら、clickedイベントを起こす
  */
 static
 void checkchild (GtkWidget *widget, gpointer data)
 {
-    //~ if (mpvradio_IS_STATIONBUTTON (widget)) {
-        //~ g_print ("station button.");
-        //~ g_signal_emit_by_name (widget, "clicked");
-    //~ }
-
     gpointer url;
-    //~ if (!strcmp (gtk_widget_get_name (widget), "GtkLabel")) {
     if (GTK_IS_LABEL (widget)) {
         url = g_hash_table_lookup (playlist_table, gtk_label_get_text (widget));
         g_print ("label : %s   url : %s\n",
@@ -315,17 +276,15 @@ void selected_children_changed_cb (GtkFlowBox      *box,
 static GtkWidget *selectergrid_new (void)
 {
     GtkWidget *btn, *grid;
-    GHashTableIter iter;
     gpointer station, url;
 
-    /*
-     * playlist_table をチェックして選局ボタンを並べる
-     */
     grid = gtk_flow_box_new ();
-    //~ gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(grid),GTK_SELECTION_NONE);
     gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(grid),GTK_SELECTION_SINGLE);
     gtk_flow_box_set_homogeneous (GTK_FLOW_BOX(grid), TRUE);
     gtk_flow_box_set_activate_on_single_click (GTK_FLOW_BOX(grid), TRUE);
+    gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), 2);
+    gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), 2);
+
     // キー押下で選局ボタンにイベントを送るための準備
     g_signal_connect (G_OBJECT(grid), "child-activated",
                 G_CALLBACK(child_activated_cb), NULL);
@@ -333,18 +292,17 @@ static GtkWidget *selectergrid_new (void)
     g_signal_connect (G_OBJECT(grid), "selected-children-changed",
                 G_CALLBACK(selected_children_changed_cb), NULL);
 
+    /*
+     * playlist_table をチェックして選局ボタンを並べる
+     */
     GList *curr;
     int i = 0;
     for (curr = g_list_first (playlist_sorted);
                 curr != NULL;curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
-            //~ btn = mpvradio_stationbutton_new_with_data (curr->data, url);
-            //~ gtk_widget_set_size_request (btn, button_width, button_height);
-            //~ g_signal_connect (G_OBJECT(btn), "clicked",
-                //~ G_CALLBACK(_mpvradio_radiopanel_clicked_cb), grid);
             btn = gtk_label_new (curr->data);
-            gtk_widget_set_size_request (btn, -1, 48);
+            gtk_widget_set_size_request (btn, -1, button_height);
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
         }
     }
@@ -391,16 +349,7 @@ static void radiopanel_dd_received (GtkWidget *widget,
 }
 
 
-GtkEventController *event_c;
-gboolean event_c_cb (GtkEventControllerKey *controller,
-                            guint                  keyval,
-                            guint                  keycode,
-                            GdkModifierType        state,
-                            gpointer               user_data)
-{
-    g_message ("val:%d code:%d",keyval, keycode);
-    return FALSE;
-}
+
 
 /*
  * 選局パネル(ウィンドウ)の作成
@@ -494,16 +443,21 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     gtk_box_pack_start (box, infobar, FALSE, TRUE, 0);
 
     selectergrid = selectergrid_new ();
+    /* Swipe */
+    GtkGesture *gesture = gtk_gesture_swipe_new (selectergrid);
+    g_signal_connect (gesture, "swipe",
+                    G_CALLBACK (swipe_gesture_swept), selectergrid);
+    gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (gesture),
+                                              GTK_PHASE_BUBBLE);
+    g_object_weak_ref (G_OBJECT (selectergrid), (GWeakNotify) g_object_unref, gesture);
 
-//
-    //~ event_c = gtk_event_controller_key_new (selectergrid);
-    //~ g_signal_connect (G_OBJECT(event_c), "key-pressed",
-                        //~ G_CALLBACK(event_c_cb), NULL);
-//
 
     gtk_scale_button_set_value (volbtn, vol);
 
     scroll = gtk_scrolled_window_new (NULL, NULL);
+    gtk_scrolled_window_set_kinetic_scrolling (scroll, TRUE);
+    gtk_scrolled_window_set_capture_button_press (scroll, TRUE);
+    gtk_scrolled_window_set_overlay_scrolling (scroll, TRUE);
     gtk_container_add (scroll, selectergrid);
 
     gtk_box_pack_start (box, scroll, TRUE, TRUE, 0);
@@ -703,10 +657,6 @@ static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
     /* IPC 受け取り後の情報格納用 */
     infomessage = gtk_entry_buffer_new ("mpvradio",-1);
 
-    /* デスクトップ通知の準備 */
-    //~ notify_init (PACKAGE);
-    //~ notifi = notify_notification_new (PACKAGE, "a mpd client for radio", mpvradioICON);
-
     /* フラグの初期化 */
     mpvradio_recv_dead = TRUE;
     mpvradio_recv_stop = FALSE;
@@ -742,8 +692,6 @@ static void mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 
     save_config_file (kconf);
 
-    //~ g_object_unref (notifi);
-    //~ notify_uninit ();
     detach_config_file (kconf);
 
 
