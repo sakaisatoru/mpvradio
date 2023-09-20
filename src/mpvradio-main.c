@@ -177,34 +177,11 @@ void mpvradio_read_playlist (void)
 }
 
 
-
-/*
- * スワイプの実装
- */
-static gdouble swipe_x = 0;
-static gdouble swipe_y = 0;
-static void
-swipe_gesture_swept (GtkGestureSwipe *gesture,
-                     gdouble          velocity_x,
-                     gdouble          velocity_y,
-                     GtkWidget       *widget)
-{
-  swipe_x = velocity_x / 10;
-  swipe_y = velocity_y / 10;
-  g_print ("swipe_x : %f  swipe_y : %f\n", swipe_x, swipe_y);
-  gtk_widget_queue_draw (widget);
-}
-
-
-
-
 static void _test_cb (gchar *url)
 {
-    char *message;
+    if (url == NULL) return;
 
     gchar *scheme = g_uri_parse_scheme (url);
-    //~ g_print ("scheme:%s\n", scheme);
-
     if (!strcmp (scheme, "plugin")) {
         // url の先頭がpluginであれば呼び出しにかかる
         gchar *station = g_path_get_basename (url); // basename をplugin の引数にする
@@ -228,7 +205,7 @@ static void _test_cb (gchar *url)
     else {
         // url や playlist であればそのまま mpv に送る
         mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
-        message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
+        char *message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
         mpvradio_ipc_send (message);
         g_free (message);
     }
@@ -237,7 +214,7 @@ static void _test_cb (gchar *url)
 }
 
 /*
- * 子ウィジェットが GtkLabel だったら、clickedイベントを起こす
+ * 子ウィジェットが GtkLabel だったら、再生する
  */
 static
 void checkchild (GtkWidget *widget, gpointer data)
@@ -245,30 +222,42 @@ void checkchild (GtkWidget *widget, gpointer data)
     gpointer url;
     if (GTK_IS_LABEL (widget)) {
         url = g_hash_table_lookup (playlist_table, gtk_label_get_text (widget));
-        g_print ("label : %s   url : %s\n",
-                    gtk_label_get_text (widget), (gchar*)url);
+        //~ g_print ("label : %s   url : %s\n",
+                    //~ gtk_label_get_text (widget), (gchar*)url);
         _test_cb ((gchar*)url);
     }
 }
 
+
 /*
  * flow_box の選択された要素上で何か起きた
  */
+static gboolean child_selected_change = FALSE;
+
 static
 void child_activated_cb (GtkFlowBox      *box,
                            GtkFlowBoxChild *child,
                            gpointer         user_data)
 {
     //~ g_print ("child-activated. %d\n", gtk_flow_box_child_get_index (child));
-    gtk_container_foreach (GTK_CONTAINER(child), checkchild, NULL);
+    if (child_selected_change == TRUE) {
+        // フラグを参照して同一局の連続呼び出しを避ける
+        // より正しくは再生中かどうかも判断しなくてはならない
+        child_selected_change = FALSE;
+        gtk_container_foreach (GTK_CONTAINER(child), checkchild, NULL);
+    }
 }
+
 
 static
 void selected_children_changed_cb (GtkFlowBox      *box,
                            gpointer         user_data)
 {
+    // このイベントはchild_activatedに先行する
     g_print ("selected_children_changed detect. \n");
+    child_selected_change = TRUE;
 }
+
 
 /*
  * 選局ボタンを並べたgtk_flow_boxを返す
@@ -285,10 +274,11 @@ static GtkWidget *selectergrid_new (void)
     gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), 2);
     gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), 2);
 
-    // キー押下で選局ボタンにイベントを送るための準備
+    // キー押下で選局ボタンにイベントを送る
     g_signal_connect (G_OBJECT(grid), "child-activated",
                 G_CALLBACK(child_activated_cb), NULL);
-    // test
+
+    // カーソルキーで移動する毎に生じるイベント
     g_signal_connect (G_OBJECT(grid), "selected-children-changed",
                 G_CALLBACK(selected_children_changed_cb), NULL);
 
@@ -349,8 +339,6 @@ static void radiopanel_dd_received (GtkWidget *widget,
 }
 
 
-
-
 /*
  * 選局パネル(ウィンドウ)の作成
  */
@@ -366,6 +354,7 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     double vol = 0.5;
 
     GtkWidget *window, *btn, *header, *scroll, *box;
+    GtkWidget *tapescroll, *tapelist, *stack;
     GtkWidget *infobar, *infotext, *infocontainer;
     GtkWidget *volbtn, *stopbtn, *playbtn, *nextbtn, *prevbtn;
     GtkWidget *menubtn;
@@ -443,13 +432,6 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
     gtk_box_pack_start (box, infobar, FALSE, TRUE, 0);
 
     selectergrid = selectergrid_new ();
-    /* Swipe */
-    //~ GtkGesture *gesture = gtk_gesture_swipe_new (selectergrid);
-    //~ g_signal_connect (gesture, "swipe",
-                    //~ G_CALLBACK (swipe_gesture_swept), selectergrid);
-    //~ gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (gesture),
-                                              //~ GTK_PHASE_BUBBLE);
-    //~ g_object_weak_ref (G_OBJECT (selectergrid), (GWeakNotify) g_object_unref, gesture);
 
 
     gtk_scale_button_set_value (volbtn, vol);
@@ -462,6 +444,15 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
 
     gtk_box_pack_start (box, scroll, TRUE, TRUE, 0);
 
+    //~ tapescroll = gtk_scrolled_window_new (NULL, NULL);
+    //~ gtk_scrolled_window_set_kinetic_scrolling (tapescroll, TRUE);
+    //~ gtk_scrolled_window_set_capture_button_press (tapescroll, TRUE);
+    //~ gtk_scrolled_window_set_overlay_scrolling (tapescroll, TRUE);
+
+    //~ stack = gtk_stack_new ();
+    //~ gtk_stack_add_titled (stack, box, "radio", "Radio");
+    //~ gtk_stack_add_titled (stack, box, "tape", "Tape");
+    //~ gtk_container_add (window, stack);
     gtk_container_add (window, box);
 
     gtk_window_set_default_size (GTK_WINDOW (window), button_width * 4, button_height * 4);
@@ -585,7 +576,6 @@ static GActionEntry app_entries[] =
   { "about", about_activated, NULL, NULL, NULL },
   { "quit", quit_activated, NULL, NULL, NULL }
 };
-
 
 
 static void mpvradio_startup_cb (GApplication *app, gpointer user_data)
