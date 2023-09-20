@@ -444,12 +444,12 @@ GtkWindow *mpvradio_radiopanel (GtkApplication *application)
 
     selectergrid = selectergrid_new ();
     /* Swipe */
-    GtkGesture *gesture = gtk_gesture_swipe_new (selectergrid);
-    g_signal_connect (gesture, "swipe",
-                    G_CALLBACK (swipe_gesture_swept), selectergrid);
-    gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (gesture),
-                                              GTK_PHASE_BUBBLE);
-    g_object_weak_ref (G_OBJECT (selectergrid), (GWeakNotify) g_object_unref, gesture);
+    //~ GtkGesture *gesture = gtk_gesture_swipe_new (selectergrid);
+    //~ g_signal_connect (gesture, "swipe",
+                    //~ G_CALLBACK (swipe_gesture_swept), selectergrid);
+    //~ gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (gesture),
+                                              //~ GTK_PHASE_BUBBLE);
+    //~ g_object_weak_ref (G_OBJECT (selectergrid), (GWeakNotify) g_object_unref, gesture);
 
 
     gtk_scale_button_set_value (volbtn, vol);
