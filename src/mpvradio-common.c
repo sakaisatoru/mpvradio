@@ -120,3 +120,42 @@ void mpvradio_common_prev (void)
 {
     mpvradio_ipc_send ("{\"command\": [\"playlist-prev\"]}\x0a");
 }
+
+
+/*
+ * 引数のURLをみてmpvに渡す
+ */
+gboolean mpvradio_common_mpv_play (gpointer url)
+{
+    if (url != NULL) {
+        gchar *scheme = g_uri_parse_scheme ((gchar*)url);
+        if (!strcmp (scheme, "plugin")) {
+            // url の先頭がpluginであれば呼び出しにかかる
+            gchar *station = g_path_get_basename ((gchar*)url); // basename をplugin の引数にする
+            //~ g_print ("station:%s\n", station);
+
+            gchar *p_path = g_path_get_dirname ((gchar*)url);
+            gchar **plugin = g_strsplit (p_path, ":", 2);
+            if (plugin != NULL) {
+                gchar *command = g_strdup_printf ("%s/mpvradio/plugins%s %s",
+                                            DATADIR, plugin[1], station);
+                system (command);
+                //~ g_print ("plugin :%s\n", command);
+                g_free (command);
+                g_strfreev (plugin);
+            }
+            g_free (p_path);
+            g_free (station);
+        }
+        else {
+            // url や playlist であればそのまま mpv に送る
+            mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
+            char *message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", (gchar*)url);
+            mpvradio_ipc_send (message);
+            g_free (message);
+        }
+        g_free (scheme);
+    }
+    //~ g_print ("tuned.");
+    return G_SOURCE_REMOVE;
+}

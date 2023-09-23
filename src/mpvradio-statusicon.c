@@ -104,14 +104,9 @@ static void
 _mpvradio_statusicon_menuitem_cb (GtkWidget *menuitem,
                                                 gpointer data)
 {
-    char *label = gtk_menu_item_get_label (menuitem);
-    char *message;
-    char *url = g_hash_table_lookup (playlist_table, label);
-    mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
-    message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", url);
-
-    mpvradio_ipc_send (message);
-    g_free (message);
+    char *url = g_hash_table_lookup (playlist_table,
+                        gtk_menu_item_get_label (menuitem));
+    mpvradio_common_mpv_play ((gpointer)url);
 }
 
 static void

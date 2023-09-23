@@ -31,4 +31,5 @@ extern void mpvradio_common_stop (void);
 extern void mpvradio_common_next (void);
 extern void mpvradio_common_prev (void);
 extern void mpvradio_common_volume_value_change (double);
+extern gboolean mpvradio_common_mpv_play (gpointer url);
 
