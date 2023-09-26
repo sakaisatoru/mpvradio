@@ -16,3 +16,5 @@ playlists_DATA	 = 00_radiko.m3u radio.m3u
 EXTRA_DIST = \
 	$(pixmaps_DATA) $(plugins_DATA) $(playlists_DATA)
 
+install-data-hook:
+	chmod a+x $(pluginsdir)/$(plugins_DATA)
