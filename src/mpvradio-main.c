@@ -45,6 +45,8 @@
 #include "mpvradio-common.h"
 #include "mpvradio-statusicon.h"
 #include "mpvradio-ipc.h"
+#include "mpvradio-playlist.h"
+#include "mpvradio-radiopanel.h"
 
 GtkWindow *radikopanel;
 GtkWindow *selectergrid;
@@ -182,95 +184,7 @@ mpvradio_read_playlist (void)
 }
 
 
-/*
- * 子ウィジェットが GtkLabel だったら、再生する
- */
-static void
-checkchild (GtkWidget *widget, gpointer data)
-{
-    gpointer url;
-    if (GTK_IS_LABEL (widget)) {
-        url = g_hash_table_lookup (playlist_table, gtk_label_get_text (widget));
-        //~ g_print ("label : %s   url : %s\n",
-                    //~ gtk_label_get_text (widget), (gchar*)url);
-        //~ g_idle_add (mpvradio_common_mpv_play, url);
-        mpvradio_common_mpv_play (url);
-    }
-}
-
-
-/*
- * flow_box の選択された要素上で何か起きた
- */
-static gboolean child_selected_change = FALSE;
-
-static void
-child_activated_cb (GtkFlowBox      *box,
-                           GtkFlowBoxChild *child,
-                           gpointer         user_data)
-{
-    //~ g_print ("child-activated. %d\n", gtk_flow_box_child_get_index (child));
-    if (child_selected_change == TRUE) {
-        // フラグを参照して同一局の連続呼び出しを避ける
-        // より正しくは再生中かどうかも判断しなくてはならない
-        child_selected_change = FALSE;
-        gtk_container_foreach (GTK_CONTAINER(child), checkchild, NULL);
-    }
-}
-
-
-static void
-selected_children_changed_cb (GtkFlowBox      *box,
-                           gpointer         user_data)
-{
-    // このイベントはchild_activatedに先行する
-    //~ g_print ("selected_children_changed detect. \n");
-    child_selected_change = TRUE;
-}
-
-
-/*
- * 選局ボタンを並べたgtk_flow_boxを返す
- */
-static GtkWidget *
-selectergrid_new (void)
-{
-    GtkWidget *btn, *grid;
-    gpointer station, url;
-
-    grid = gtk_flow_box_new ();
-    gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(grid),GTK_SELECTION_SINGLE);
-    gtk_flow_box_set_homogeneous (GTK_FLOW_BOX(grid), TRUE);
-    gtk_flow_box_set_activate_on_single_click (GTK_FLOW_BOX(grid), TRUE);
-    gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), 2);
-    gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), 2);
-
-    // ラベルにてボタンクリックと等価の動作を行うための準備
-    g_signal_connect (G_OBJECT(grid), "child-activated",
-                G_CALLBACK(child_activated_cb), NULL);
-
-    // カーソルキーで移動する毎に生じるイベント
-    g_signal_connect (G_OBJECT(grid), "selected-children-changed",
-                G_CALLBACK(selected_children_changed_cb), NULL);
-
-    /*
-     * playlist_table をチェックして選局ボタンを並べる
-     */
-    GList *curr;
-    int i = 0;
-    for (curr = g_list_first (playlist_sorted);
-                curr != NULL;curr = g_list_next (curr)) {
-        if (curr->data != NULL) {
-            url = g_hash_table_lookup (playlist_table, curr->data);
-            btn = gtk_label_new (curr->data);
-            gtk_widget_set_size_request (btn, -1, button_height);
-            gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
-        }
-    }
-
-    return grid;
-}
-
+static GtkWidget *box2; // playlist 挿入用
 
 /*
  * ドラッグアンドドロップでファイル名を受け取ってmpvへ送る
@@ -294,21 +208,34 @@ radiopanel_dd_received (GtkWidget *widget,
         return;
     }
 
+    GtkListStore *playstore =
+            gtk_list_store_new (4, G_TYPE_UINT,   // track
+                                    G_TYPE_STRING,  // title
+                                    G_TYPE_STRING,  //  playtime
+                                    G_TYPE_STRING); //  filename
+
     for (int iter = 0; filenames[iter] != NULL; iter++) {
         filename = g_filename_from_uri (filenames[iter], NULL, NULL);
         //~ g_print("detect : %s\n",filename);
 
         // 処理
+#if 0
         message = g_strdup_printf (
                     "{\"command\": [\"loadfile\",\"%s\",\"append-play\"]}\x0a",
                                                             filename);
         mpvradio_ipc_send (message);
         g_free (message);
-
+#endif
+        read_songlist (filename, playstore);
+        printf ("%s\n", filename);
         g_free (filename);
     }
     g_strfreev (filenames);
     gtk_drag_finish (context, TRUE, FALSE, time);
+
+    GtkWidget *view = playlist_viewer_new (playstore);
+    gtk_box_pack_start (box2, view, TRUE, TRUE, 0);
+    gtk_widget_show (view);
 }
 
 
@@ -316,7 +243,7 @@ radiopanel_dd_received (GtkWidget *widget,
  * 選局パネル(ウィンドウ)の作成
  */
 GtkWindow *
-mpvradio_radiopanel (GtkApplication *application)
+mpvradio_window_new (GtkApplication *application)
 {
     struct mpd_connection *cn;
     struct mpd_playlist *pl;
@@ -328,11 +255,13 @@ mpvradio_radiopanel (GtkApplication *application)
     double vol = 0.5;
 
     GtkWidget *window, *btn, *header, *scroll, *box;
-    GtkWidget *tapescroll, *tapelist, *stack;
+    GtkWidget *tapescroll, *tapelist;
     GtkWidget *infobar, *infotext, *infocontainer;
     GtkWidget *volbtn, *stopbtn, *playbtn, *nextbtn, *prevbtn;
     GtkWidget *menubtn;
     GMenuModel *menumodel;
+
+    GtkWidget *stack, *stackswitcher;
 
     gint x,y;
 
@@ -402,10 +331,8 @@ mpvradio_radiopanel (GtkApplication *application)
     gtk_widget_set_can_focus (infotext, FALSE);
     gtk_box_pack_start (infobar, infotext, FALSE, TRUE, 0);
 
-    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
-    gtk_box_pack_start (box, infobar, FALSE, TRUE, 0);
 
-    selectergrid = selectergrid_new ();
+    selectergrid = mpvradio_radiopanel_new ();
 
 
     gtk_scale_button_set_value (volbtn, vol);
@@ -416,12 +343,27 @@ mpvradio_radiopanel (GtkApplication *application)
     gtk_scrolled_window_set_overlay_scrolling (scroll, TRUE);
     gtk_container_add (scroll, selectergrid);
 
-    gtk_box_pack_start (box, scroll, TRUE, TRUE, 0);
+    box2 = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
 
+
+    stack = gtk_stack_new ();
+    gtk_widget_set_size_request (stack, 800, 500);
+    gtk_stack_add_titled (stack, scroll, "radio", "Radio");
+    gtk_stack_add_titled (stack, box2, "playlist", "Playlist");
+    gtk_stack_set_visible_child (stack, box2);
+
+    stackswitcher = gtk_stack_switcher_new ();
+    gtk_stack_switcher_set_stack (stackswitcher, stack);
+
+    GtkWidget *grid = gtk_box_new (GTK_ORIENTATION_VERTICAL, 2);
+    gtk_box_pack_start (grid, stack, FALSE, TRUE, 0);
+    gtk_box_pack_start (grid, stackswitcher, FALSE, TRUE, 0);
+
+    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
+    gtk_box_pack_start (box, infobar, FALSE, TRUE, 0);
+    gtk_box_pack_start (box, grid, FALSE, TRUE, 0);
     gtk_container_add (window, box);
 
-    gtk_window_set_default_size (GTK_WINDOW (window), button_width * 4, button_height * 4);
-    //~ gtk_window_set_default_size (GTK_WINDOW (window), 800, 600);
     return window;
 }
 
@@ -675,7 +617,7 @@ mpvradio_activate_cb (GtkApplication *app, gpointer data)
     GList *windows;
     windows = gtk_application_get_windows (app);
     if (windows == NULL) {
-        radikopanel = mpvradio_radiopanel (app);
+        radikopanel = mpvradio_window_new (app);
         //~ mpvradio_notify_currentsong ();
     }
     gtk_widget_show_all (radikopanel);

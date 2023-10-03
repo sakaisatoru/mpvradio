@@ -16,13 +16,10 @@ AC_SUBST(GETTEXT_PACKAGE)
 
 # Checks for libraries.
 PKG_CHECK_MODULES(GTK, gtk+-3.0)
-#~ PKG_CHECK_MODULES(HANDY, libhandy-1)
 PKG_CHECK_MODULES(NOTIFY, libnotify)
 PKG_CHECK_MODULES(JSONGLIB, json-glib-1.0)
-#~ PKG_CHECK_MODULES(MPDCLIENT, libmpdclient)
-#~ PKG_CHECK_MODULES(APPINDICATOR, appindicator3-0.1)
-#~ PKG_CHECK_MODULES(APPINDICATOR, ayatana-appindicator3-0.1)
 PKG_CHECK_MODULES(XAPP, xapp)
+PKG_CHECK_MODULES(TAGLIB, taglib_c)
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h stdlib.h locale.h])

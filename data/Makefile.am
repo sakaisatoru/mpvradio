@@ -10,7 +10,7 @@ pluginsdir		 = $(datadir)/mpvradio/plugins
 plugins_DATA	 = radiko.py
 
 playlistsdir	 = $(datadir)/mpvradio/playlists
-playlists_DATA	 = 00_radiko.m3u radio.m3u
+playlists_DATA	 = radio.m3u
 
 
 EXTRA_DIST = \

@@ -77,9 +77,9 @@ GKeyFile *load_config_file (void)
             "version=%s\n" \
             "\n"    \
             "[playlist]\n"   \
-            "radiko=%s/mpvradio/playlists/00_radiko.m3u\n" \
             "other=%s/mpvradio/playlists/radio.m3u\n" \
             "\n", PACKAGE, PACKAGE_VERSION, DATADIR, DATADIR);
+            //~ "radiko=%s/mpvradio/playlists/00_radiko.m3u\n" \
 
         g_key_file_load_from_data (kf, default_conf, -1,
             G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS,
