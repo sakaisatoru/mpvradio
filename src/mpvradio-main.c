@@ -227,7 +227,7 @@ radiopanel_dd_received (GtkWidget *widget,
         g_free (message);
 #endif
         read_songlist (filename, playstore);
-        printf ("%s\n", filename);
+        //~ printf ("%s\n", filename);
         g_free (filename);
     }
     g_strfreev (filenames);

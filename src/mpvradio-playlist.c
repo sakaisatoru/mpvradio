@@ -24,6 +24,7 @@
 #include "glib.h"
 #include "gdk/gdkkeysyms.h"
 #include "tag_c.h"
+#include "mpvradio-common.h"
 
 /*
  * 曲ファイルからtag情報を得て store にセットする
@@ -131,7 +132,7 @@ gboolean read_songlist (char *filename, GtkListStore *playstore)
             s = g_strchug (s);
             if (*s == '#') continue;    // コメント行は飛ばす
             if ((t = strrchr (s, '\n')) != NULL) *t = '\0';
-            printf ("%s\n", s);
+            //~ printf ("%s\n", s);
             if (strlen (s) != 0) {
                 store_songinfo (s, playstore);
             }
@@ -145,6 +146,53 @@ gboolean read_songlist (char *filename, GtkListStore *playstore)
     return TRUE;
 }
 
+static void playback (GtkWidget *widget)
+{
+    GtkTreeSelection *selection;
+    GtkTreeModel *store;
+    GtkTreeIter iter;
+    gchar *execprj;
+
+    if (GTK_IS_TREE_VIEW(widget)) {
+        // UIからプロジェクト名を得る
+        selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(widget));
+        store = gtk_tree_view_get_model (GTK_TREE_VIEW(widget));
+        if (gtk_tree_selection_get_selected (selection, &store,
+                                                    &iter) == TRUE ) {
+            gtk_tree_model_get (store, &iter, 3, &execprj, -1);
+            //~ printf ("%s\n", execprj);
+            mpvradio_common_mpv_play (execprj);
+            g_free (execprj);
+        }
+    }
+}
+
+static gboolean cb_button_press_event(GtkWidget *widget,
+                                        GdkEventButton *event,
+                                        gpointer data)
+{
+    // 左ボタン　ダブルクリック
+    if (event->button == 1 && event->type == GDK_2BUTTON_PRESS) {
+        playback (widget);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static gboolean cb_key_press_event (GtkWidget *widget,
+                                    GdkEventKey *event,
+                                    gpointer data)
+{
+    gint kv;
+
+    kv = toupper (event->keyval);
+    if (kv == GDK_KEY_Return) {
+        playback (widget);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 GtkWidget *playlist_viewer_new (GtkListStore *playstore)
 {
     GtkWidget *view, *scroll;
@@ -153,6 +201,11 @@ GtkWidget *playlist_viewer_new (GtkListStore *playstore)
 
     view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(playstore));
     gtk_tree_view_set_headers_visible (view, TRUE);
+    g_signal_connect (view, "key-press-event",
+                        G_CALLBACK (cb_key_press_event), NULL);
+    g_signal_connect (view, "button-press-event",
+                        G_CALLBACK (cb_button_press_event), NULL);
+
 
     // トラック番号
     renderer = gtk_cell_renderer_text_new ();

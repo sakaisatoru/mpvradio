@@ -127,8 +127,12 @@ void mpvradio_common_prev (void)
  */
 gboolean mpvradio_common_mpv_play (gpointer url)
 {
+    gchar *scheme;
     if (url != NULL) {
-        gchar *scheme = g_uri_parse_scheme ((gchar*)url);
+        // パスをそのまま渡すと g_uri_parse_schemeでセグるので事前に判定する
+        scheme = (g_uri_is_valid (url, G_URI_FLAGS_NONE, NULL) == TRUE)?
+            g_uri_parse_scheme ((gchar*)url) : g_strdup ("");
+
         if (!strcmp (scheme, "plugin")) {
             // url の先頭がpluginであれば呼び出しにかかる
             gchar *station = g_path_get_basename ((gchar*)url); // basename をplugin の引数にする
@@ -151,11 +155,11 @@ gboolean mpvradio_common_mpv_play (gpointer url)
             // url や playlist であればそのまま mpv に送る
             mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
             char *message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", (gchar*)url);
+            printf ("%s\n", message);
             mpvradio_ipc_send (message);
             g_free (message);
         }
         g_free (scheme);
     }
-    //~ g_print ("tuned.");
     return G_SOURCE_REMOVE;
 }
