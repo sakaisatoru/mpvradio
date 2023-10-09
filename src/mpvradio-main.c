@@ -51,7 +51,7 @@
 GtkWindow *radikopanel;
 GtkWindow *selectergrid;
 XAppStatusIcon *appindicator;       // LinuxMint 専用
-GtkWidget *infomessage;             // IPC受け取り後の格納用
+GtkEntryBuffer *infomessage;             // IPC受け取り後の格納用
 
 static GKeyFile *kconf;
 
@@ -219,13 +219,6 @@ radiopanel_dd_received (GtkWidget *widget,
         //~ g_print("detect : %s\n",filename);
 
         // 処理
-#if 0
-        message = g_strdup_printf (
-                    "{\"command\": [\"loadfile\",\"%s\",\"append-play\"]}\x0a",
-                                                            filename);
-        mpvradio_ipc_send (message);
-        g_free (message);
-#endif
         read_songlist (filename, playstore);
         //~ printf ("%s\n", filename);
         g_free (filename);
@@ -237,6 +230,16 @@ radiopanel_dd_received (GtkWidget *widget,
     gtk_box_pack_start (box2, view, TRUE, TRUE, 0);
     gtk_widget_show (view);
 }
+
+void infotext_inserted_text_cb (GtkEntryBuffer *buffer,
+                                   guint           position,
+                                   char           *chars,
+                                   guint           n_chars,
+                                   gpointer        user_data)
+{
+    g_print ("insert infotext:%s", chars);
+}
+
 
 
 /*
@@ -328,6 +331,8 @@ mpvradio_window_new (GtkApplication *application)
     /* 情報表示用 */
     infobar = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
     infotext = gtk_entry_new_with_buffer (infomessage);
+
+
     gtk_widget_set_can_focus (infotext, FALSE);
     gtk_box_pack_start (infobar, infotext, FALSE, TRUE, 0);
 
@@ -559,6 +564,8 @@ mpvradio_startup_cb (GApplication *app, gpointer user_data)
 
     /* IPC 受け取り後の情報格納用 */
     infomessage = gtk_entry_buffer_new ("mpvradio",-1);
+    g_signal_connect (G_OBJECT(infomessage), "inserted-text",
+                G_CALLBACK(infotext_inserted_text_cb), NULL);
 
     /* フラグの初期化 */
     mpvradio_recv_dead = TRUE;
@@ -638,7 +645,7 @@ int main (int argc, char **argv)
     textdomain (PACKAGE);
 
     app = gtk_application_new ("com.google.endeavor2wako.mpvradio",
-                                            G_APPLICATION_FLAGS_NONE);
+                                            G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect (app, "startup",  G_CALLBACK (mpvradio_startup_cb),  NULL);
     g_signal_connect (app, "shutdown", G_CALLBACK (mpvradio_shutdown_cb), NULL);
     g_signal_connect (app, "activate", G_CALLBACK (mpvradio_activate_cb), NULL);

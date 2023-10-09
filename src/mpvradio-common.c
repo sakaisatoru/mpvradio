@@ -25,7 +25,7 @@
 #include "mpvradio-ipc.h"
 
 extern XAppStatusIcon *appindicator;
-extern GtkWidget *infomessage;             // IPC受け取り後の格納用
+extern GtkEntryBuffer *infomessage;             // IPC受け取り後の格納用
 
 /*
  * シグナルコールバック用の汎用ラッパ

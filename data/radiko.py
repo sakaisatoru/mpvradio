@@ -96,4 +96,3 @@ s.connect("/run/user/1000/mpvsocket")
 s.send(s2.encode())
 d = s.recv(1024)
 s.close()
-

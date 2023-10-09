@@ -25,17 +25,14 @@
 #   include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <glib.h>
 #include <glib/gstdio.h>
-#include <gtk/gtk.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-#include "libxapp/xapp-preferences-window.h"
-
-#include "mpvradio.h"
-
+#include "glib/gi18n.h"
+#include "gtk/gtk.h"
 
 void detach_config_file (GKeyFile *kf)
 {
@@ -44,48 +41,42 @@ void detach_config_file (GKeyFile *kf)
 
 void save_config_file (GKeyFile *kf)
 {
-    gchar *conf_file_name;
-    gchar *filename, *dir, *sel;
+    GError *err = NULL;
+    gchar *conf_file_name = g_build_filename (g_get_user_config_dir (),
+                                    PACKAGE, PACKAGE".conf", NULL);
 
-    dir = g_strdup_printf ("%s/%s", g_get_user_config_dir (), PACKAGE);
-    conf_file_name = g_strdup_printf ("%s/%s.conf", dir, PACKAGE);
-
-    if (g_key_file_save_to_file (kf, conf_file_name, NULL) == FALSE) {
+    if (g_key_file_save_to_file (kf, conf_file_name, &err) == FALSE) {
         /* 設定ファイルの保存に失敗しました。*/
-        g_warning (N_("Failed to save the configuration file."));
+        g_warning (err->message);
+        g_clear_error (&err);
     }
     g_free (conf_file_name);
-    g_free (dir);
 }
 
 GKeyFile *load_config_file (void)
 {
-    gchar *conf_file_name;
-    gchar *filename, *dir, *sel;
+    gchar *conf_file_name, *dir;
     GError *err = NULL;
     GKeyFile *kf;
 
-    kf = g_key_file_new ();
-    dir = g_strdup_printf ("%s/%s", g_get_user_config_dir (), PACKAGE);
-    conf_file_name = g_strdup_printf ("%s/%s.conf", dir, PACKAGE);
-    //~ g_print ("conf file %s\n", conf_file_name);
-    if (g_key_file_load_from_file(kf, conf_file_name,
-            G_KEY_FILE_NONE, NULL) == FALSE) {
+    dir = g_build_filename (g_get_user_config_dir (), PACKAGE, NULL);
+    conf_file_name = g_build_filename (dir, PACKAGE".conf", NULL);
 
-        gchar *default_conf = g_strdup_printf (
-            "[%s]\n" \
-            "version=%s\n" \
+    kf = g_key_file_new ();
+    if (g_key_file_load_from_file(kf, conf_file_name,
+                            G_KEY_FILE_NONE, NULL) == FALSE) {
+        // 設定ファイルが見つからなかったので取り敢えず既定値の保存を試みる
+        const gchar *default_conf =
+            "["PACKAGE"]\n" \
+            "version="PACKAGE_VERSION"\n" \
             "\n"    \
             "[playlist]\n"   \
-            "other=%s/mpvradio/playlists/radio.m3u\n" \
-            "\n", PACKAGE, PACKAGE_VERSION, DATADIR, DATADIR);
-            //~ "radiko=%s/mpvradio/playlists/00_radiko.m3u\n" \
+            "other="DATADIR"/mpvradio/playlists/radio.m3u\n" \
+            "\n";
 
         g_key_file_load_from_data (kf, default_conf, -1,
             G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS,
             NULL);
-        g_free (default_conf);
-        // 設定ファイルが見つからなかったので取り敢えず既定値の保存を試みる
         g_mkdir (dir, S_IRWXU);
         if (g_key_file_save_to_file (kf, conf_file_name, &err) == FALSE) {
             g_warning (err->message);
@@ -97,49 +88,5 @@ GKeyFile *load_config_file (void)
     g_free (dir);
 
     return kf;
-}
-
-static void
-grid_destroy_cb (GtkWidget *obj, gpointer user_data)
-{
-    g_message ("%s destroy.", user_data);
-}
-
-static gboolean
-password_focus_cb (GtkWidget       *widget,
-               //~ GtkDirectionType direction,
-                        GdkEvent  *event,
-               gpointer         user_data)
-{
-    g_print ("password\n");
-    GdkEventType t;
-    t = gdk_event_get_event_type (event);
-    if (t == GDK_ENTER_NOTIFY) {
-        g_print ("GDK_ENTER_NOTIFY\n");
-    }
-    else if (t == GDK_LEAVE_NOTIFY) {
-        g_print ("GDK_LEAVE_NOTIFY\n");
-    }
-    else if (t == GDK_FOCUS_CHANGE) {
-        if (gtk_switch_get_state (GTK_SWITCH(user_data)) == TRUE) {
-            g_print ("enable.\n");
-            return FALSE;
-        }
-        else {
-            g_print ("disable.\n");
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static void
-uasw_activate_cb (GtkWidget *obj, GParamSpec *pspec, gpointer user_data)
-{
-    gboolean flag;
-
-    flag = gtk_switch_get_state (GTK_SWITCH(obj));
-    g_print ("uasw state : %s\n", ((flag == TRUE) ? "TRUE":"FALSE"));
-    gtk_widget_set_can_focus (GTK_WIDGET(user_data), flag);
 }
 

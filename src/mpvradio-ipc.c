@@ -74,7 +74,7 @@ void mpvradio_ipc_remove_socket (void)
  * 別スレッドで動かすこと
  */
 extern XAppStatusIcon *appindicator;       // LinuxMint 専用
-extern GtkWidget *infomessage;             // IPC受け取り後の格納用
+extern GtkEntryBuffer *infomessage;             // IPC受け取り後の格納用
 
 static void destroy_notify (gpointer hoge)
 {
