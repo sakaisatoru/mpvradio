@@ -32,10 +32,9 @@ child_activated_cb (GtkFlowBox      *box,
                            GtkFlowBoxChild *child,
                            gpointer         user_data)
 {
-    //~ g_print ("child-activated. %d\n", gtk_flow_box_child_get_index (child));
-    if (child_selected_change == TRUE) {
-        // フラグを参照して同一局の連続呼び出しを避ける
-        // より正しくは再生中かどうかも判断しなくてはならない
+    // フラグを参照して同一局の連続呼び出しを避ける
+    if (child_selected_change == TRUE ||
+            mpvradio_common_check_mpv_is_play () == FALSE) {
         child_selected_change = FALSE;
         gtk_container_foreach (GTK_CONTAINER(child), checkchild, NULL);
     }

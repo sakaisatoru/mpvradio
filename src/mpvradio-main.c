@@ -185,52 +185,6 @@ mpvradio_read_playlist (void)
 
 
 static GtkWidget *box2; // playlist 挿入用
-#if 0
-/*
- * ドラッグアンドドロップでファイル名を受け取ってmpvへ送る
- */
-static void
-radiopanel_dd_received (GtkWidget *widget,
-                                    GdkDragContext *context,
-                                    gint        x,
-                                    gint        y,
-                                    GtkSelectionData *data,
-                                    guint       info,
-                                    guint       time,
-                                    gpointer    user_data)
-{
-    gchar **filenames = NULL, *filename, *message;
-
-    filenames = g_uri_list_extract_uris((const gchar *)gtk_selection_data_get_data (data));
-    if (filenames == NULL) {
-        //~ g_print ("error");
-        gtk_drag_finish (context, FALSE, FALSE, time);
-        return;
-    }
-
-    GtkListStore *playstore =
-            gtk_list_store_new (4, G_TYPE_UINT,   // track
-                                    G_TYPE_STRING,  // title
-                                    G_TYPE_STRING,  //  playtime
-                                    G_TYPE_STRING); //  filename
-
-    for (int iter = 0; filenames[iter] != NULL; iter++) {
-        filename = g_filename_from_uri (filenames[iter], NULL, NULL);
-        //~ g_print("detect : %s\n",filename);
-
-        // 処理
-        read_songlist (filename, playstore);
-        //~ printf ("%s\n", filename);
-        g_free (filename);
-    }
-    g_strfreev (filenames);
-    gtk_drag_finish (context, TRUE, FALSE, time);
-
-    GtkWidget *view = playlist_viewer_new (playstore);
-    gtk_box_pack_start (box2, view, TRUE, TRUE, 0);
-    gtk_widget_show (view);
-}
-#endif
 
 void infotext_inserted_text_cb (GtkEntryBuffer *buffer,
                                    guint           position,
@@ -261,8 +215,7 @@ mpvradio_window_new (GtkApplication *application)
     GtkWidget *window, *btn, *header, *scroll, *box;
     GtkWidget *tapescroll, *tapelist;
     GtkWidget *infobar, *infotext, *infocontainer;
-    GtkWidget *volbtn, *stopbtn, *playbtn, *nextbtn, *prevbtn;
-    GtkWidget *menubtn;
+    GtkWidget *volbtn, *stopbtn;
     GMenuModel *menumodel;
 
     GtkWidget *stack, *stackswitcher;
@@ -274,15 +227,6 @@ mpvradio_window_new (GtkApplication *application)
                         G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
                         G_CALLBACK(gtk_widget_hide_on_delete), NULL);
-#if 0
-    // プレイリストをDnDで受け取るための準備
-    static GtkTargetEntry te[] = {
-        {"text/uri-list", 0, 0}
-    };
-    gtk_drag_dest_set (window, GTK_DEST_DEFAULT_ALL, te, 1, GDK_ACTION_COPY);
-    g_signal_connect (G_OBJECT(window), "drag-data-received",
-                        G_CALLBACK(radiopanel_dd_received), NULL);
-#endif
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();
@@ -290,25 +234,10 @@ mpvradio_window_new (GtkApplication *application)
     g_signal_connect (G_OBJECT(volbtn), "value-changed",
                         G_CALLBACK(volume_value_change_cb), NULL);
 
-    volume_up_button = gtk_scale_button_get_plus_button (volbtn);
-    volume_down_button = gtk_scale_button_get_minus_button (volbtn);
+    volume_up_button = gtk_scale_button_get_plus_button (GTK_SCALE_BUTTON (volbtn));
+    volume_down_button = gtk_scale_button_get_minus_button (GTK_SCALE_BUTTON (volbtn));
 
 
-    // 戻るボタン
-    //~ prevbtn = gtk_button_new_from_icon_name ("media-skip-backward",
-                                                //~ GTK_ICON_SIZE_BUTTON);
-    //~ g_signal_connect (G_OBJECT(prevbtn), "clicked",
-                                //~ G_CALLBACK(mpvradio_common_cb), mpvradio_common_prev);
-    // プレイ・ポーズボタン
-    //~ playbtn = gtk_button_new_from_icon_name ("media-playback-start-symbolic",
-                                                //~ GTK_ICON_SIZE_BUTTON);
-    //~ g_signal_connect (G_OBJECT(playbtn), "clicked",
-                                //~ G_CALLBACK(mpvradio_common_toggle_pause), NULL);
-    // 進むボタン
-    //~ nextbtn = gtk_button_new_from_icon_name ("media-skip-forward",
-                                                //~ GTK_ICON_SIZE_BUTTON);
-    //~ g_signal_connect (G_OBJECT(nextbtn), "clicked",
-                                //~ G_CALLBACK(mpvradio_common_cb), mpvradio_common_next);
     // ストップボタン
     stopbtn = gtk_button_new_from_icon_name ("media-playback-stop-symbolic",
                                                 GTK_ICON_SIZE_BUTTON);
@@ -316,18 +245,14 @@ mpvradio_window_new (GtkApplication *application)
                                 G_CALLBACK(mpvradio_common_cb), mpvradio_common_stop);
 
     header = gtk_header_bar_new ();
-    gtk_header_bar_set_decoration_layout (header, "menu:close");
+    gtk_header_bar_set_decoration_layout (GTK_HEADER_BAR (header), "menu:close");
     gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header), TRUE);
     gtk_header_bar_set_title (GTK_HEADER_BAR (header), PACKAGE);
     gtk_header_bar_set_has_subtitle (GTK_HEADER_BAR (header), TRUE);
 
     gtk_window_set_titlebar (GTK_WINDOW (window), header);
-    //~ gtk_header_bar_pack_start (GTK_HEADER_BAR (header), menubtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), stopbtn);
-    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), nextbtn);
-    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
-    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), prevbtn);
 
 
     /* 情報表示用 */
@@ -336,87 +261,22 @@ mpvradio_window_new (GtkApplication *application)
 
     selectergrid = mpvradio_radiopanel_new ();
 
-    gtk_scale_button_set_value (volbtn, vol);
+    gtk_scale_button_set_value (GTK_SCALE_BUTTON (volbtn), vol);
 
     scroll = gtk_scrolled_window_new (NULL, NULL);
-    gtk_scrolled_window_set_kinetic_scrolling (scroll, TRUE);
-    gtk_scrolled_window_set_capture_button_press (scroll, TRUE);
-    gtk_scrolled_window_set_overlay_scrolling (scroll, TRUE);
-    gtk_container_add (scroll, selectergrid);
+    gtk_scrolled_window_set_kinetic_scrolling (GTK_SCROLLED_WINDOW (scroll), TRUE);
+    gtk_scrolled_window_set_capture_button_press (GTK_SCROLLED_WINDOW (scroll), TRUE);
+    gtk_scrolled_window_set_overlay_scrolling (GTK_SCROLLED_WINDOW (scroll), TRUE);
+    gtk_container_add (GTK_CONTAINER (scroll), selectergrid);
 
-#if 0
-    box2 = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
-    stack = gtk_stack_new ();
-    gtk_widget_set_size_request (stack, 800, 500);
-    gtk_stack_add_titled (stack, scroll, "radio", "Radio");
-    gtk_stack_add_titled (stack, box2, "playlist", "Playlist");
-    gtk_stack_set_visible_child (stack, box2);
-
-    stackswitcher = gtk_stack_switcher_new ();
-    gtk_stack_switcher_set_stack (stackswitcher, stack);
-
-    GtkWidget *grid = gtk_box_new (GTK_ORIENTATION_VERTICAL, 2);
-    gtk_box_pack_start (grid, stack, FALSE, TRUE, 0);
-    gtk_box_pack_start (grid, stackswitcher, FALSE, TRUE, 0);
-
-    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
-    gtk_box_pack_start (box, infotext, FALSE, TRUE, 0);
-    gtk_box_pack_start (box, grid, FALSE, TRUE, 0);
-#else
     box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
     gtk_box_pack_start (box, infotext, FALSE, TRUE, 0);
     gtk_widget_set_size_request (scroll, 800, 500);
     gtk_box_pack_start (box, scroll, FALSE, TRUE, 0);
-#endif
 
     gtk_container_add (GTK_CONTAINER(window), box);
 
     return window;
-}
-
-
-static void
-fileopen_activated (GSimpleAction *action,
-                       GVariant      *parameter,
-                       gpointer       app)
-{
-    GList *windows;
-    GtkWidget *dialog;
-    gint res;
-    gchar *filename, *message;
-
-    GtkFileChooserAction act = GTK_FILE_CHOOSER_ACTION_OPEN;
-
-    windows = gtk_application_get_windows (app);
-    if (windows != NULL) {
-        dialog = gtk_file_chooser_dialog_new ("Open File",
-                                                windows->data,
-                                                act,
-                                                _("_Cancel"),
-                                                GTK_RESPONSE_CANCEL,
-                                                _("_Open"),
-                                                GTK_RESPONSE_ACCEPT,
-                                                NULL);
-        res = gtk_dialog_run (GTK_DIALOG(dialog));
-        if (res == GTK_RESPONSE_ACCEPT) {
-            GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-            filename = gtk_file_chooser_get_filename (chooser);
-            // 以下の処理が躓くとダイアログが閉じないので先に閉じる
-            gtk_widget_destroy (dialog);
-
-            // 処理
-            message = g_strdup_printf (
-                    "{\"command\": [\"loadfile\",\"%s\",\"append-play\"]}\x0a",
-                                                            filename);
-            //~ g_message ("file name : %s", filename);
-            g_free (filename);
-            mpvradio_ipc_send (message);
-            g_free (message);
-        }
-        else {
-            gtk_widget_destroy (dialog);
-        }
-    }
 }
 
 
@@ -472,7 +332,6 @@ quit_activated (GSimpleAction *action,
 static GActionEntry app_entries[] =
 {
   { "quicktune", quicktune_activated, NULL, NULL, NULL },
-  { "fileopen", fileopen_activated, NULL, NULL, NULL },
   { "about", about_activated, NULL, NULL, NULL },
   { "quit", quit_activated, NULL, NULL, NULL }
 };
@@ -492,23 +351,11 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
     "<menu id=\"appmenu\">"
     "<section>"
       "<item>"
-        "<attribute name=\"label\" translatable=\"yes\">Disconnect</attribute>"
-        "<attribute name=\"action\">app.disconnect</attribute>"
-      "</item>"
-      "<item>"
         "<attribute name=\"label\" translatable=\"yes\">QuickTune</attribute>"
         "<attribute name=\"action\">app.quicktune</attribute>"
       "</item>"
-      "<item>"
-        "<attribute name=\"label\" translatable=\"yes\">FileOpen</attribute>"
-        "<attribute name=\"action\">app.fileopen</attribute>"
-      "</item>"
     "</section>"
     "<section>"
-      "<item>"
-        "<attribute name=\"label\" translatable=\"yes\">_Preferences</attribute>"
-        "<attribute name=\"action\">app.preferences</attribute>"
-      "</item>"
       "<item>"
         "<attribute name=\"label\" translatable=\"yes\">_about</attribute>"
         "<attribute name=\"action\">app.about</attribute>"
@@ -522,7 +369,6 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
     "</interface>",
                                             -1);
     const gchar *quit_accels[2] = { "<Ctrl>Q", NULL };
-    const gchar *open_accels[2] = { "<Ctrl>O", NULL };
     const gchar *url_accels[2]  = { "<Ctrl>L", NULL };
     g_action_map_add_action_entries (G_ACTION_MAP (app),
                                    app_entries, G_N_ELEMENTS (app_entries),
@@ -533,9 +379,6 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
     gtk_application_set_accels_for_action (app,
                                          "app.quit",
                                          quit_accels);
-    gtk_application_set_accels_for_action (app,
-                                         "app.fileopen",
-                                         open_accels);
 
     app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu"));
     gtk_application_set_app_menu (app, app_menu);

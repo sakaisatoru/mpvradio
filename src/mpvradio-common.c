@@ -36,33 +36,16 @@ void mpvradio_common_cb (GtkWidget *menuitem, gpointer user_data)
 }
 
 /*
- * 音量調整
+ * mpv が演奏中なら TRUE を返す
  */
-void mpvradio_common_volume_value_change (double value)
-{
-}
-
-/*
- * 再生（受信）開始
- */
-void mpvradio_common_play (void)
-{
-}
-
-
-/*
- * 一時停止・再開
- */
-void mpvradio_common_toggle_pause (GtkButton *button,
-                                                gpointer   user_data)
+gboolean mpvradio_common_check_mpv_is_play (void)
 {
     char *s;
-    int retval = 0;
     GError *er = NULL;
 
     s = mpvradio_ipc_send_and_response (
-        "{\"command\": [\"get_property\", \"pause\"]}\x0a");
-    g_message ("pause -->");g_message ("[=[%s]=]\n",s);
+        "{\"command\": [\"get_property\", \"stream-path\"]}\x0a");
+    //~ g_message ("path -->");g_message ("[=[%s]=]\n",s);
     JsonParser *parser = json_parser_new ();
     json_parser_load_from_data (parser, s, -1, NULL);
 
@@ -72,7 +55,8 @@ void mpvradio_common_toggle_pause (GtkButton *button,
     //~ er = json_reader_get_error (reader);
     //~ if (er) {g_message ("read member --->\n");g_error (er->message);}
 
-    gboolean mpv_data = json_reader_get_boolean_value (reader);
+    gchar *mpv_data = json_reader_get_string_value (reader);
+    //~ g_print ("result : %s\n", mpv_data);
     //~ er = json_reader_get_error (reader);
     //~ if (er) {g_message ("get value --->\n");g_error (er->message);}
 
@@ -84,22 +68,9 @@ void mpvradio_common_toggle_pause (GtkButton *button,
 
     g_free (s);
 
-    if (!mpv_data) {
-        gtk_button_set_image (button, NULL);
-        gtk_button_set_image (button,
-            gtk_image_new_from_icon_name ("media-playback-start-symbolic",
-                                GTK_ICON_SIZE_SMALL_TOOLBAR));
-        //~ mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", true]}\x0a");
-        mpvradio_ipc_send ("{\"command\": [\"stop\"]}\x0a");
-    }
-    else {
-        gtk_button_set_image (button, NULL);
-        gtk_button_set_image (button,
-            gtk_image_new_from_icon_name ("media-playback-stop-symbolic",
-                                GTK_ICON_SIZE_SMALL_TOOLBAR));
-        mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
-    }
+    return (mpv_data == NULL)?FALSE:TRUE;
 }
+
 
 /*
  * 再生（受信）停止
@@ -115,18 +86,18 @@ void mpvradio_common_stop (void)
 /*
  * 次の曲
  */
-void mpvradio_common_next (void)
-{
-    mpvradio_ipc_send ("{\"command\": [\"playlist-next\"]}\x0a");
-}
+//~ void mpvradio_common_next (void)
+//~ {
+    //~ mpvradio_ipc_send ("{\"command\": [\"playlist-next\"]}\x0a");
+//~ }
 
 /*
  * 前の曲
  */
-void mpvradio_common_prev (void)
-{
-    mpvradio_ipc_send ("{\"command\": [\"playlist-prev\"]}\x0a");
-}
+//~ void mpvradio_common_prev (void)
+//~ {
+    //~ mpvradio_ipc_send ("{\"command\": [\"playlist-prev\"]}\x0a");
+//~ }
 
 
 /*
@@ -162,7 +133,7 @@ gboolean mpvradio_common_mpv_play (gpointer url)
             // url や playlist であればそのまま mpv に送る
             mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
             char *message = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", (gchar*)url);
-            printf ("%s\n", message);
+            //~ printf ("%s\n", message);
             mpvradio_ipc_send (message);
             g_free (message);
         }
