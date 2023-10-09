@@ -471,7 +471,11 @@ int main (int argc, char **argv)
     textdomain (PACKAGE);
 
     app = gtk_application_new ("com.google.endeavor2wako.mpvradio",
+#if GLIB_CHECK_VERSION(2,74,0)
                                             G_APPLICATION_DEFAULT_FLAGS);
+#else
+                                            G_APPLICATION_FLAGS_NONE);
+#endif
     g_signal_connect (app, "startup",  G_CALLBACK (mpvradio_startup_cb),  NULL);
     g_signal_connect (app, "shutdown", G_CALLBACK (mpvradio_shutdown_cb), NULL);
     g_signal_connect (app, "activate", G_CALLBACK (mpvradio_activate_cb), NULL);

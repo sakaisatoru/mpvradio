@@ -108,9 +108,14 @@ gboolean mpvradio_common_mpv_play (gpointer url)
     gchar *scheme;
     if (url != NULL) {
         // パスをそのまま渡すと g_uri_parse_schemeでセグるので事前に判定する
-        scheme = (g_uri_is_valid (url, G_URI_FLAGS_NONE, NULL) == TRUE)?
-            g_uri_parse_scheme ((gchar*)url) : g_strdup ("");
-
+        // 2.66 and later
+#if GLIB_CHECK_VERSION (2,66,0)
+            scheme = (g_uri_is_valid (url, G_URI_FLAGS_NONE, NULL) == TRUE)?
+                g_uri_parse_scheme ((gchar*)url) : g_strdup ("");
+#else
+            scheme = g_uri_parse_scheme ((gchar*)url);
+            if (scheme == NULL) scheme = g_strdup ("");
+#endif
         if (!strcmp (scheme, "plugin")) {
             // url の先頭がpluginであれば呼び出しにかかる
             gchar *station = g_path_get_basename ((gchar*)url); // basename をplugin の引数にする
