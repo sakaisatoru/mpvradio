@@ -45,7 +45,7 @@
 #include "mpvradio-common.h"
 #include "mpvradio-statusicon.h"
 #include "mpvradio-ipc.h"
-#include "mpvradio-playlist.h"
+//~ #include "mpvradio-playlist.h"
 #include "mpvradio-radiopanel.h"
 
 GtkWindow *radikopanel;
@@ -185,7 +185,7 @@ mpvradio_read_playlist (void)
 
 
 static GtkWidget *box2; // playlist 挿入用
-
+#if 0
 /*
  * ドラッグアンドドロップでファイル名を受け取ってmpvへ送る
  */
@@ -230,6 +230,7 @@ radiopanel_dd_received (GtkWidget *widget,
     gtk_box_pack_start (box2, view, TRUE, TRUE, 0);
     gtk_widget_show (view);
 }
+#endif
 
 void infotext_inserted_text_cb (GtkEntryBuffer *buffer,
                                    guint           position,
@@ -273,7 +274,7 @@ mpvradio_window_new (GtkApplication *application)
                         G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
                         G_CALLBACK(gtk_widget_hide_on_delete), NULL);
-
+#if 0
     // プレイリストをDnDで受け取るための準備
     static GtkTargetEntry te[] = {
         {"text/uri-list", 0, 0}
@@ -281,6 +282,7 @@ mpvradio_window_new (GtkApplication *application)
     gtk_drag_dest_set (window, GTK_DEST_DEFAULT_ALL, te, 1, GDK_ACTION_COPY);
     g_signal_connect (G_OBJECT(window), "drag-data-received",
                         G_CALLBACK(radiopanel_dd_received), NULL);
+#endif
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();
@@ -293,20 +295,20 @@ mpvradio_window_new (GtkApplication *application)
 
 
     // 戻るボタン
-    prevbtn = gtk_button_new_from_icon_name ("media-skip-backward",
-                                                GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT(prevbtn), "clicked",
-                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_prev);
+    //~ prevbtn = gtk_button_new_from_icon_name ("media-skip-backward",
+                                                //~ GTK_ICON_SIZE_BUTTON);
+    //~ g_signal_connect (G_OBJECT(prevbtn), "clicked",
+                                //~ G_CALLBACK(mpvradio_common_cb), mpvradio_common_prev);
     // プレイ・ポーズボタン
-    playbtn = gtk_button_new_from_icon_name ("media-playback-pause-symbolic",
-                                                GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT(playbtn), "clicked",
-                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_toggle_pause);
+    //~ playbtn = gtk_button_new_from_icon_name ("media-playback-start-symbolic",
+                                                //~ GTK_ICON_SIZE_BUTTON);
+    //~ g_signal_connect (G_OBJECT(playbtn), "clicked",
+                                //~ G_CALLBACK(mpvradio_common_toggle_pause), NULL);
     // 進むボタン
-    nextbtn = gtk_button_new_from_icon_name ("media-skip-forward",
-                                                GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT(nextbtn), "clicked",
-                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_next);
+    //~ nextbtn = gtk_button_new_from_icon_name ("media-skip-forward",
+                                                //~ GTK_ICON_SIZE_BUTTON);
+    //~ g_signal_connect (G_OBJECT(nextbtn), "clicked",
+                                //~ G_CALLBACK(mpvradio_common_cb), mpvradio_common_next);
     // ストップボタン
     stopbtn = gtk_button_new_from_icon_name ("media-playback-stop-symbolic",
                                                 GTK_ICON_SIZE_BUTTON);
@@ -323,22 +325,16 @@ mpvradio_window_new (GtkApplication *application)
     //~ gtk_header_bar_pack_start (GTK_HEADER_BAR (header), menubtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), stopbtn);
-    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), nextbtn);
-    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
-    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), prevbtn);
+    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), nextbtn);
+    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), playbtn);
+    //~ gtk_header_bar_pack_end (GTK_HEADER_BAR (header), prevbtn);
 
 
     /* 情報表示用 */
-    infobar = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
     infotext = gtk_entry_new_with_buffer (infomessage);
-
-
     gtk_widget_set_can_focus (infotext, FALSE);
-    gtk_box_pack_start (infobar, infotext, FALSE, TRUE, 0);
-
 
     selectergrid = mpvradio_radiopanel_new ();
-
 
     gtk_scale_button_set_value (volbtn, vol);
 
@@ -348,9 +344,8 @@ mpvradio_window_new (GtkApplication *application)
     gtk_scrolled_window_set_overlay_scrolling (scroll, TRUE);
     gtk_container_add (scroll, selectergrid);
 
+#if 0
     box2 = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
-
-
     stack = gtk_stack_new ();
     gtk_widget_set_size_request (stack, 800, 500);
     gtk_stack_add_titled (stack, scroll, "radio", "Radio");
@@ -365,9 +360,16 @@ mpvradio_window_new (GtkApplication *application)
     gtk_box_pack_start (grid, stackswitcher, FALSE, TRUE, 0);
 
     box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
-    gtk_box_pack_start (box, infobar, FALSE, TRUE, 0);
+    gtk_box_pack_start (box, infotext, FALSE, TRUE, 0);
     gtk_box_pack_start (box, grid, FALSE, TRUE, 0);
-    gtk_container_add (window, box);
+#else
+    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
+    gtk_box_pack_start (box, infotext, FALSE, TRUE, 0);
+    gtk_widget_set_size_request (scroll, 800, 500);
+    gtk_box_pack_start (box, scroll, FALSE, TRUE, 0);
+#endif
+
+    gtk_container_add (GTK_CONTAINER(window), box);
 
     return window;
 }
@@ -467,27 +469,8 @@ quit_activated (GSimpleAction *action,
 }
 
 
-static void
-disconnect_activated (GSimpleAction *action,
-                GVariant      *parameter,
-                gpointer       app)
-{
-    /* mpd応答待ち処理側のスレッドを止める。
-     * 実際に止まるのは、mpdからの応答を得た後
-     */
-    mpvradio_recv_stop = TRUE;
-    /*
-     * ここでUIの破壊ルーチンを呼ぶ
-     */
-    gtk_widget_hide (selectergrid);
-    //~ gtk_widget_destroy (selectergrid);
-    g_message ("exit disconnect_activate.");
-}
-
-
 static GActionEntry app_entries[] =
 {
-  //~ { "disconnect", disconnect_activated, NULL, NULL, NULL },
   { "quicktune", quicktune_activated, NULL, NULL, NULL },
   { "fileopen", fileopen_activated, NULL, NULL, NULL },
   { "about", about_activated, NULL, NULL, NULL },
@@ -496,7 +479,7 @@ static GActionEntry app_entries[] =
 
 
 static void
-mpvradio_startup_cb (GApplication *app, gpointer user_data)
+mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
 {
     GtkBuilder *builder;
     GMenuModel *app_menu, *popup_menu;
@@ -544,18 +527,18 @@ mpvradio_startup_cb (GApplication *app, gpointer user_data)
     g_action_map_add_action_entries (G_ACTION_MAP (app),
                                    app_entries, G_N_ELEMENTS (app_entries),
                                    app);
-    gtk_application_set_accels_for_action (GTK_APPLICATION (app),
+    gtk_application_set_accels_for_action (app,
                                          "app.quicktune",
                                          url_accels);
-    gtk_application_set_accels_for_action (GTK_APPLICATION (app),
+    gtk_application_set_accels_for_action (app,
                                          "app.quit",
                                          quit_accels);
-    gtk_application_set_accels_for_action (GTK_APPLICATION (app),
+    gtk_application_set_accels_for_action (app,
                                          "app.fileopen",
                                          open_accels);
 
     app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu"));
-    gtk_application_set_app_menu (GTK_APPLICATION (app), app_menu);
+    gtk_application_set_app_menu (app, app_menu);
 
     /* デスクトップ用ステータスアイコン (Linux Mint 専用) */
     appindicator = mpvradio_statusicon_new (app);

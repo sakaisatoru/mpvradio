@@ -123,19 +123,19 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
     if (button == 3) {
         /* メニュー作成 */
         menu = gtk_menu_new ();
-        menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_MEDIA_PLAY,NULL);
-        //~ menuitem = gtk_menu_item_new_with_label ("⏸ pause");
-        g_signal_connect (menuitem, "activate",
-            //~ G_CALLBACK (mpvradio_common_cb), mpvradio_common_play);
-            G_CALLBACK (mpvradio_common_cb), mpvradio_common_toggle_pause);
-        gtk_menu_shell_append (menu, menuitem);
         menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_MEDIA_STOP,NULL);
-        //~ menuitem = gtk_menu_item_new_with_label ("⏹ stop");
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (mpvradio_common_cb), mpvradio_common_stop);
-        gtk_menu_shell_append (menu, menuitem);
+        gtk_menu_shell_append (GTK_MENU_SHELL(menu), menuitem);
 
-        gtk_menu_shell_append (menu, gtk_separator_menu_item_new ());
+        gtk_menu_shell_append (GTK_MENU_SHELL(menu), gtk_separator_menu_item_new ());
+
+        menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT,NULL);
+        g_signal_connect (menuitem, "activate",
+            G_CALLBACK (menu_quit_cb), app);
+        gtk_menu_shell_append (GTK_MENU_SHELL(menu), menuitem);
+
+        gtk_menu_shell_append (GTK_MENU_SHELL(menu), gtk_separator_menu_item_new ());
 
         gpointer url;
         GList *curr = g_list_first (playlist_sorted);
@@ -146,23 +146,13 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
                 menuitem = gtk_menu_item_new_with_label (curr->data);
                 g_signal_connect (menuitem, "activate",
                     G_CALLBACK (_mpvradio_statusicon_menuitem_cb), NULL);
-                gtk_menu_shell_append (menu, menuitem);
+                gtk_menu_shell_append (GTK_MENU_SHELL(menu), menuitem);
             }
             curr = g_list_next (curr);
         }
 
-        gtk_menu_shell_append (menu, gtk_separator_menu_item_new ());
-
-        //~ menuitem = gtk_menu_item_new_with_label ("🚪 quit");
-        // gtk_image_menu_item_new_from_stockは3.10以降非推奨
-        menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT,NULL);
-        g_signal_connect (menuitem, "activate",
-            G_CALLBACK (menu_quit_cb), app);
-        gtk_menu_shell_append (menu, menuitem);
-        //~ gtk_menu_shell_prepend (menu, menuitem);
-
         gtk_widget_show_all (menu);
-        xapp_status_icon_popup_menu (icon, menu, x, y, button, time, panel_position);
+        xapp_status_icon_popup_menu (icon, GTK_MENU(menu), x, y, button, time, panel_position);
     }
 }
 

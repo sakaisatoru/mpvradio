@@ -49,10 +49,12 @@ void mpvradio_common_play (void)
 {
 }
 
+
 /*
  * 一時停止・再開
  */
-void mpvradio_common_toggle_pause (void)
+void mpvradio_common_toggle_pause (GtkButton *button,
+                                                gpointer   user_data)
 {
     char *s;
     int retval = 0;
@@ -60,7 +62,7 @@ void mpvradio_common_toggle_pause (void)
 
     s = mpvradio_ipc_send_and_response (
         "{\"command\": [\"get_property\", \"pause\"]}\x0a");
-    //~ g_message ("pause -->");g_message ("[=[%s]=]\n",s);
+    g_message ("pause -->");g_message ("[=[%s]=]\n",s);
     JsonParser *parser = json_parser_new ();
     json_parser_load_from_data (parser, s, -1, NULL);
 
@@ -83,9 +85,18 @@ void mpvradio_common_toggle_pause (void)
     g_free (s);
 
     if (!mpv_data) {
-        mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", true]}\x0a");
+        gtk_button_set_image (button, NULL);
+        gtk_button_set_image (button,
+            gtk_image_new_from_icon_name ("media-playback-start-symbolic",
+                                GTK_ICON_SIZE_SMALL_TOOLBAR));
+        //~ mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", true]}\x0a");
+        mpvradio_ipc_send ("{\"command\": [\"stop\"]}\x0a");
     }
     else {
+        gtk_button_set_image (button, NULL);
+        gtk_button_set_image (button,
+            gtk_image_new_from_icon_name ("media-playback-stop-symbolic",
+                                GTK_ICON_SIZE_SMALL_TOOLBAR));
         mpvradio_ipc_send ("{\"command\": [\"set_property\", \"pause\", false]}\x0a");
     }
 }
@@ -95,10 +106,6 @@ void mpvradio_common_toggle_pause (void)
  */
 void mpvradio_common_stop (void)
 {
-    //~ if (current_mpv) {
-        //~ g_message ("kill %d", current_mpv);
-        //~ kill (current_mpv, SIGTERM);
-    //~ }
     mpvradio_ipc_send ("{\"command\": [\"stop\"]}\x0a");
     gtk_entry_buffer_set_text (infomessage, "",-1);
     xapp_status_icon_set_label (appindicator,
