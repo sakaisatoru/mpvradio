@@ -19,7 +19,7 @@ PKG_CHECK_MODULES(GTK, gtk+-3.0)
 PKG_CHECK_MODULES(NOTIFY, libnotify)
 PKG_CHECK_MODULES(JSONGLIB, json-glib-1.0)
 PKG_CHECK_MODULES(XAPP, xapp)
-PKG_CHECK_MODULES(TAGLIB, taglib_c)
+#~ PKG_CHECK_MODULES(TAGLIB, taglib_c)
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h stdlib.h locale.h])

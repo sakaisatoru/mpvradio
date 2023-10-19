@@ -196,7 +196,6 @@ void infotext_inserted_text_cb (GtkEntryBuffer *buffer,
 }
 
 
-
 /*
  * 選局パネル(ウィンドウ)の作成
  */
@@ -267,12 +266,13 @@ mpvradio_window_new (GtkApplication *application)
     gtk_scrolled_window_set_kinetic_scrolling (GTK_SCROLLED_WINDOW (scroll), TRUE);
     gtk_scrolled_window_set_capture_button_press (GTK_SCROLLED_WINDOW (scroll), TRUE);
     gtk_scrolled_window_set_overlay_scrolling (GTK_SCROLLED_WINDOW (scroll), TRUE);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_container_add (GTK_CONTAINER (scroll), selectergrid);
+    //~ gtk_widget_set_size_request (scroll, 400, 400);
 
-    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
+    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 2);
     gtk_box_pack_start (box, infotext, FALSE, TRUE, 0);
-    gtk_widget_set_size_request (scroll, 800, 500);
-    gtk_box_pack_start (box, scroll, FALSE, TRUE, 0);
+    gtk_box_pack_start (box, scroll, TRUE, TRUE, 0);
 
     gtk_container_add (GTK_CONTAINER(window), box);
 

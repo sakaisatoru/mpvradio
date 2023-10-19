@@ -65,7 +65,7 @@ mpvradio_radiopanel_new (void)
     gtk_flow_box_set_activate_on_single_click (GTK_FLOW_BOX(grid), TRUE);
     gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), 2);
     gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), 2);
-
+	gtk_flow_box_set_max_children_per_line (GTK_FLOW_BOX(grid), 6);
     // ラベルにてボタンクリックと等価の動作を行うための準備
     g_signal_connect (G_OBJECT(grid), "child-activated",
                 G_CALLBACK(child_activated_cb), NULL);
