@@ -4,7 +4,6 @@
 #include "mpvradio-common.h"
 
 extern GHashTable *playlist_table;
-extern GList *playlist_sorted;
 
 /*
  * flow_box の選択された要素上で何か起きた
@@ -77,21 +76,21 @@ mpvradio_radiopanel_new (void)
     /*
      * playlist_table をチェックして選局ボタンを並べる
      */
-    GList *curr;
+    GList *playlist_sorted, *curr;
     int i = 0;
-    for (curr = g_list_first (playlist_sorted);
-                curr != NULL;curr = g_list_next (curr)) {
+    playlist_sorted = g_hash_table_get_keys (playlist_table);
+    playlist_sorted = curr = g_list_sort (playlist_sorted, strcmp);
+    for (;curr != NULL;curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
             btn = gtk_label_new (curr->data);
             gtk_label_set_width_chars (GTK_LABEL(btn), 10);
             gtk_label_set_max_width_chars (GTK_LABEL(btn), 20);
             gtk_label_set_line_wrap (GTK_LABEL(btn), TRUE);
-            //~ gtk_widget_set_size_request (btn, -1, button_height);
-            //~ gtk_widget_set_size_request (btn, button_width, button_height);
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
         }
     }
+    g_list_free (playlist_sorted);
     return grid;
 }
 

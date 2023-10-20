@@ -95,7 +95,6 @@ menu_quit_cb (GtkWidget *menuitem, gpointer app)
 }
 
 extern GHashTable *playlist_table;  // main.c
-extern GList *playlist_sorted;
 
 /*
  * 選局メニューのコールバック
@@ -109,6 +108,7 @@ _mpvradio_statusicon_menuitem_cb (GtkWidget *menuitem,
     mpvradio_common_mpv_play ((gpointer)url);
 }
 
+			   
 static void
 mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
                gint            x,
@@ -123,6 +123,7 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
     if (button == 3) {
         /* メニュー作成 */
         menu = gtk_menu_new ();
+
         menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_MEDIA_STOP,NULL);
         g_signal_connect (menuitem, "activate",
             G_CALLBACK (mpvradio_common_cb), mpvradio_common_stop);
@@ -138,18 +139,21 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
         gtk_menu_shell_append (GTK_MENU_SHELL(menu), gtk_separator_menu_item_new ());
 
         gpointer url;
-        GList *curr = g_list_first (playlist_sorted);
+		GList *playlist_sorted, *curr;
+		playlist_sorted = g_hash_table_get_keys (playlist_table);
+		playlist_sorted = curr = g_list_sort (playlist_sorted, strcmp);
         while (curr != NULL) {
             if (curr->data != NULL) {
-                //~ g_message ("station : %s", curr->data);
                 url = g_hash_table_lookup (playlist_table, curr->data);
                 menuitem = gtk_menu_item_new_with_label (curr->data);
                 g_signal_connect (menuitem, "activate",
                     G_CALLBACK (_mpvradio_statusicon_menuitem_cb), NULL);
+
                 gtk_menu_shell_append (GTK_MENU_SHELL(menu), menuitem);
             }
             curr = g_list_next (curr);
         }
+		g_list_free (playlist_sorted);
 
         gtk_widget_show_all (menu);
         xapp_status_icon_popup_menu (icon, GTK_MENU(menu), x, y, button, time, panel_position);

@@ -112,28 +112,24 @@ radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
  * playlist の内容をハッシュテーブルに格納する
  */
 GHashTable *playlist_table;
-GList *playlist_sorted = NULL;
+
 void
 mpvradio_read_playlist (void)
 {
     gchar buf[256], *pos, *station, **playlist, **pl, *fn;
-    int i, flag = FALSE;
+    int i;
+    gboolean flag = FALSE;
 
     playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-    pl = playlist;
+    pl = playlist;	
+    station = NULL;
     while (*pl != NULL) {
         fn = g_key_file_get_value (kconf, "playlist", *pl, NULL);
-        //~ g_message (fn);
-        FILE *fp = fopen (fn, "r");
+        FILE *fp = fopen (fn, "rt");
         if (fp != NULL) {
-            while (!feof(fp)) {
-                if (fgets (buf, sizeof(buf)-1, fp) == NULL) {
-                    if (ferror(fp)) {
-                        break;
-                    }
-                }
+            while (fgets (buf, sizeof(buf)-1, fp)) {
                 pos = g_strchug (buf);
 
                 // Extended M3U
@@ -154,17 +150,20 @@ mpvradio_read_playlist (void)
                     continue;
                 }
 
-                if (flag) {
+                if (flag == TRUE) {
                     // 直前に #EXTINFがあれば URLとして読み込む
                     if (*pos != '#') {  // コメント避け
                         char *tail = strrchr (pos, '\n');
                         if (tail != NULL) *tail = '\0';
                         if (station != NULL) {
-                            g_hash_table_insert (playlist_table, station, g_strdup (pos));
-                            // ソート用のリストに追加する
-                            // hashテーブルに格納した局名は、hashテーブル開放時に破壊されるので
-                            // リスト用に新規に確保する。
-                            playlist_sorted = g_list_append (playlist_sorted, g_strdup(station));
+							if (g_hash_table_contains (playlist_table, station)) {
+								if (!g_hash_table_replace (playlist_table, station, g_strdup (pos))) {
+									g_warning ("duplicate station and URL : %s", station);
+								}
+							}
+							else {
+								g_hash_table_insert (playlist_table, station, g_strdup (pos));
+							}
                         }
                         flag = FALSE;
                     }
@@ -180,7 +179,6 @@ mpvradio_read_playlist (void)
         pl++;
     }
     g_strfreev (playlist);
-    playlist_sorted = g_list_sort (playlist_sorted, strcmp);
 }
 
 
@@ -438,7 +436,6 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     g_object_unref (infomessage);
 
     g_hash_table_destroy (playlist_table);
-    g_list_free_full (playlist_sorted, g_free);
 
     g_message ("shutdown now.");
 }
