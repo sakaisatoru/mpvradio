@@ -123,7 +123,7 @@ mpvradio_read_playlist (void)
     playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-    pl = playlist;	
+    pl = playlist;
     station = NULL;
     while (*pl != NULL) {
         fn = g_key_file_get_value (kconf, "playlist", *pl, NULL);
@@ -156,14 +156,14 @@ mpvradio_read_playlist (void)
                         char *tail = strrchr (pos, '\n');
                         if (tail != NULL) *tail = '\0';
                         if (station != NULL) {
-							if (g_hash_table_contains (playlist_table, station)) {
-								if (!g_hash_table_replace (playlist_table, station, g_strdup (pos))) {
-									g_warning ("duplicate station and URL : %s", station);
-								}
-							}
-							else {
-								g_hash_table_insert (playlist_table, station, g_strdup (pos));
-							}
+                            if (g_hash_table_contains (playlist_table, station)) {
+                                if (!g_hash_table_replace (playlist_table, station, g_strdup (pos))) {
+                                    g_warning ("duplicate station and URL : %s", station);
+                                }
+                            }
+                            else {
+                                g_hash_table_insert (playlist_table, station, g_strdup (pos));
+                            }
                         }
                         flag = FALSE;
                     }
@@ -220,6 +220,8 @@ mpvradio_window_new (GtkApplication *application)
     gint x,y;
 
     window = gtk_application_window_new (application);
+    gtk_window_set_default_size (GTK_WINDOW(window), 640, 480);
+    gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     g_signal_connect (G_OBJECT(window), "destroy",
                         G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
@@ -415,14 +417,17 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 {
     GList *windows;
 
-    //~ mpvradio_stop_mpv ();
     mpvradio_common_stop ();    // appindicatorが存在するうちに呼ぶ事
 
     g_object_unref (appindicator);
 
     windows = gtk_application_get_windows (app);
     while (windows != NULL && GTK_IS_WINDOW(windows->data)) {
-        gtk_widget_destroy (windows->data);
+        if (gtk_widget_in_destruction (windows->data) == FALSE) {
+            // メインウィンドウを閉じた場合は、２重に破壊してセグるので
+            // 破壊中かどうかチェックする
+            gtk_widget_destroy (windows->data);
+        }
         windows = g_list_next(windows);
     }
 
@@ -448,7 +453,6 @@ mpvradio_activate_cb (GtkApplication *app, gpointer data)
     windows = gtk_application_get_windows (app);
     if (windows == NULL) {
         radikopanel = mpvradio_window_new (app);
-        //~ mpvradio_notify_currentsong ();
     }
     gtk_widget_show_all (radikopanel);
     gtk_window_present (radikopanel);

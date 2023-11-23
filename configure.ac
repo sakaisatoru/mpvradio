@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([mpvradio], [0.1.0], [endeavor2wako@gmail.com])
+AC_INIT([mpvradio], [0.1.1], [endeavor2wako@gmail.com])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/mpvradio-main.c])
 AC_CONFIG_HEADERS([config.h])
