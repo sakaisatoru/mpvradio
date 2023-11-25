@@ -1,4 +1,5 @@
 # http://www.gnu.org/software/automake
+src/mpvradio
 
 Makefile.in
 /ar-lib
