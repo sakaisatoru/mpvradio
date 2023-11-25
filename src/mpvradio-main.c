@@ -308,15 +308,20 @@ about_activated (GSimpleAction *action,
     gchar *authors[] = { "endeavor wako", "sakai satoru", NULL };
     GList *windows = gtk_application_get_windows (app);
 
+    GdkPixbuf *buf = gdk_pixbuf_new_from_file (DATADIR"/pixmaps/mpvradio.png", NULL);
+
     gtk_show_about_dialog (windows->data,
         "copyright", "endeavor wako 2021",
         "authors", authors,
         "translator-credits", "endeavor wako (japanese)",
         "license-type", GTK_LICENSE_LGPL_2_1,
-        "logo-icon-name", "media-playback-start-symbolic",
+        //~ "logo-icon-name", "media-playback-start-symbolic",
+        "logo", buf,
         "program-name", PACKAGE,
         "version", PACKAGE_VERSION,
         NULL);
+
+    g_object_unref (buf);
 }
 
 

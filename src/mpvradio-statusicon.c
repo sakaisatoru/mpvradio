@@ -108,7 +108,7 @@ _mpvradio_statusicon_menuitem_cb (GtkWidget *menuitem,
     mpvradio_common_mpv_play ((gpointer)url);
 }
 
-			   
+
 static void
 mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
                gint            x,
@@ -139,9 +139,9 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
         gtk_menu_shell_append (GTK_MENU_SHELL(menu), gtk_separator_menu_item_new ());
 
         gpointer url;
-		GList *playlist_sorted, *curr;
-		playlist_sorted = g_hash_table_get_keys (playlist_table);
-		playlist_sorted = curr = g_list_sort (playlist_sorted, strcmp);
+        GList *playlist_sorted, *curr;
+        playlist_sorted = g_hash_table_get_keys (playlist_table);
+        playlist_sorted = curr = g_list_sort (playlist_sorted, strcmp);
         while (curr != NULL) {
             if (curr->data != NULL) {
                 url = g_hash_table_lookup (playlist_table, curr->data);
@@ -153,7 +153,7 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
             }
             curr = g_list_next (curr);
         }
-		g_list_free (playlist_sorted);
+        g_list_free (playlist_sorted);
 
         gtk_widget_show_all (menu);
         xapp_status_icon_popup_menu (icon, GTK_MENU(menu), x, y, button, time, panel_position);
@@ -165,7 +165,7 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
 XAppStatusIcon *mpvradio_statusicon_new (GtkApplication *app)
 {
     XAppStatusIcon *appindicator = xapp_status_icon_new ();
-    xapp_status_icon_set_icon_name (appindicator, mpvradioICON);
+    xapp_status_icon_set_icon_name (appindicator, DATADIR"/pixmaps/mpvradio.png");
     g_signal_connect (appindicator, "activate",
                     G_CALLBACK (mpvradio_statusicon_activate_cb), app);
     g_signal_connect (appindicator, "scroll-event",
