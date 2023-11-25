@@ -98,7 +98,7 @@ volume_value_change_cb (GtkScaleButton *button,
     g_free (message);
 }
 
-
+#if 0
 static void
 radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
 {
@@ -106,7 +106,7 @@ radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
         g_message ("destroy_cb : %s.", gtk_window_get_title (widget));
     }
 }
-
+#endif
 
 /*
  * playlist の内容をハッシュテーブルに格納する
@@ -222,8 +222,8 @@ mpvradio_window_new (GtkApplication *application)
     window = gtk_application_window_new (application);
     gtk_window_set_default_size (GTK_WINDOW(window), 640, 480);
     gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    g_signal_connect (G_OBJECT(window), "destroy",
-                        G_CALLBACK(radiopanel_destroy_cb), NULL);
+    //~ g_signal_connect (G_OBJECT(window), "destroy",
+                        //~ G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
                         G_CALLBACK(gtk_widget_hide_on_delete), NULL);
 

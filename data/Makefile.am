@@ -12,9 +12,12 @@ plugins_DATA	 = radiko.py
 playlistsdir	 = $(datadir)/mpvradio/playlists
 playlists_DATA	 = radio.m3u
 
+scriptsdir	 	 = $(datadir)/mpvradio/scripts
+scripts_DATA	 = mpvradio.lua
+
 
 EXTRA_DIST = \
-	$(pixmaps_DATA) $(plugins_DATA) $(playlists_DATA)
+	$(pixmaps_DATA) $(plugins_DATA) $(playlists_DATA) $(scripts_DATA)
 
 install-data-hook:
 	chmod a+x $(pluginsdir)/$(plugins_DATA)
