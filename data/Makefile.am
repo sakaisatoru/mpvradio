@@ -13,7 +13,7 @@ playlistsdir	 = $(datadir)/mpvradio/playlists
 playlists_DATA	 = radio.m3u
 
 scriptsdir	 	 = $(datadir)/mpvradio/scripts
-scripts_DATA	 = mpvradio.lua
+scripts_DATA	 = mpvradio.lua logodownload.sh
 
 
 EXTRA_DIST = \
