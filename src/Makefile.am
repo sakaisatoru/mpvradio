@@ -13,7 +13,9 @@ mpvradio_SOURCES = \
 	mpvradio-ipc.c	\
 	mpvradio-ipc.h	\
 	mpvradio-radiopanel.c \
-	mpvradio-radiopanel.h
+	mpvradio-radiopanel.h	\
+	mpvradio-banner.h	\
+	mpvradio-banner.c
 
 #	mpvradio-notify.c
 
