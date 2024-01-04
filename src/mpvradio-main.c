@@ -81,6 +81,7 @@ extern void save_config_file (GKeyFile *);
 extern GKeyFile *load_config_file (void);
 extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 
+extern GHashTable *banner_logo_set_up (void);
 
 /*
  * 音量調整
@@ -111,7 +112,7 @@ radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
 /*
  * playlist の内容をハッシュテーブルに格納する
  */
-GHashTable *playlist_table;
+GHashTable *playlist_table, *playlist_logo_table;
 
 void
 mpvradio_read_playlist (void)
@@ -408,6 +409,7 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
 
     /* ラジオ局一覧 (playlist)の読み込み */
     mpvradio_read_playlist ();
+    playlist_logo_table = banner_logo_set_up ();
 
     /* ipc サーバを動かす */
     g_thread_new ("mpvradio", mpvradio_ipc_recv, NULL);
@@ -446,6 +448,7 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     g_object_unref (infomessage);
 
     g_hash_table_destroy (playlist_table);
+    g_hash_table_destroy (playlist_logo_table);
 
     g_message ("shutdown now.");
 }

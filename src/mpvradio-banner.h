@@ -24,11 +24,13 @@ typedef struct _MpvradioBanner      MpvradioBanner;
 GType           mpvradio_banner_get_type          (void) G_GNUC_CONST;
 
 GtkWidget      *mpvradio_banner_new               (GtkOrientation orientation, gint spacing);
-GtkWidget      *mpvradio_banner_new_with_data   (GtkOrientation orientation, gint spacing, gchar *name, gchar *url);
+GtkWidget      *mpvradio_banner_new_with_data   (GtkOrientation orientation, gint spacing, gchar *name, gchar *url, gchar *banner);
 gchar          *mpvradio_banner_get_name        (MpvradioBanner *self);
 gchar          *mpvradio_banner_get_url         (MpvradioBanner *self);
+gchar          *mpvradio_banner_get_banner      (MpvradioBanner *self);
 void            mpvradio_banner_set_name        (MpvradioBanner *self, gchar *name);
 void            mpvradio_banner_set_url         (MpvradioBanner *self, gchar *url);
+void            mpvradio_banner_set_banner      (MpvradioBanner *self, gchar *banner);
 
 gboolean        mpvradio_banner_do_execute        (MpvradioBanner *self);
 void            mpvradio_banner_popup             (MpvradioBanner *self, GdkEvent *event);

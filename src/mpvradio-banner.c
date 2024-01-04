@@ -37,8 +37,9 @@ struct _MpvradioBanner
   GtkWidget *image;
   GtkWidget *label;
 
-  gchar     *name;  // station name
-  gchar     *url;   // mpv に渡すurl
+  gchar     *name;      // station name
+  gchar     *url;       // mpv に渡すurl
+  gchar     *banner;    // banner file name
 };
 
 
@@ -61,28 +62,24 @@ mpvradio_banner_new (GtkOrientation orientation, gint spacing)
 }
 
 GtkWidget *
-mpvradio_banner_new_with_data (GtkOrientation orientation, gint spacing, gchar *name, gchar *url)
+mpvradio_banner_new_with_data (GtkOrientation orientation, gint spacing,
+                                    gchar *name, gchar *url, gchar *banner)
 {
     MpvradioBanner *self = MPVRADIO_BANNER (mpvradio_banner_new (orientation, spacing));
 
     mpvradio_banner_set_name (self, name);
     mpvradio_banner_set_url (self, url);
+    mpvradio_banner_set_banner (self, banner);
 
-    GdkPixbuf *pixbuf, *buf2;
-    gint banner_width = 128, banner_height = 64;
-
-    // url の末尾を元にキャッシュリストからイメージファイルを漁ってくる処理を入れる
-    //~ pixbuf = gdk_pixbuf_from_file (/*banner image cache file*/, NULL);
-    pixbuf = gdk_pixbuf_new_from_file ("/home/sakai/.cache/mpvradio/logo/JOAK-FM.png", NULL);// test用
-    //~ if (pixbuf != NULL) {
-        //~ buf2 = gdk_pixbuf_scale_simple (pixbuf, banner_width, banner_height, GDK_INTERP_BILINEAR);
-    //~ }
-    //~ self->image = gtk_image_new_from_pixbuf (buf2);
+    //~ GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (banner, NULL);
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size (banner, -1, 64, NULL);
     self->image = gtk_image_new_from_pixbuf (pixbuf);
     g_object_unref (pixbuf);
-    g_object_unref (buf2);
 
     self->label = gtk_label_new (name);
+    gtk_label_set_width_chars (GTK_LABEL(self->label), 10);
+    gtk_label_set_max_width_chars (GTK_LABEL(self->label), 20);
+    gtk_label_set_line_wrap (GTK_LABEL(self->label), TRUE);
 
     gtk_box_pack_start (GTK_BOX(self), self->image, FALSE, TRUE, 10);
     gtk_box_pack_start (GTK_BOX(self), self->label, FALSE, TRUE, 5);
@@ -102,6 +99,12 @@ mpvradio_banner_get_url (MpvradioBanner *self)
     return self->url;
 }
 
+gchar *
+mpvradio_banner_get_banner (MpvradioBanner *self)
+{
+    return self->banner;
+}
+
 void
 mpvradio_banner_set_name (MpvradioBanner *self, gchar *name)
 {
@@ -114,6 +117,13 @@ mpvradio_banner_set_url (MpvradioBanner *self, gchar *url)
 {
     g_free (self->url);
     self->url = g_strdup (url);
+}
+
+void
+mpvradio_banner_set_banner (MpvradioBanner *self, gchar *banner)
+{
+    g_free (self->banner);
+    self->banner = g_strdup (banner);
 }
 
 
@@ -134,8 +144,9 @@ mpvradio_banner_class_init (MpvradioBannerClass *klass)
 static void
 mpvradio_banner_init (MpvradioBanner *self)
 {
-    self->name  = NULL;
-    self->url   = NULL;
+    self->name   = NULL;
+    self->url    = NULL;
+    self->banner = NULL;
 }
 
 
@@ -153,6 +164,7 @@ mpvradio_banner_finalize (GObject *object)
 
     g_free (self->name);
     g_free (self->url);
+    g_free (self->banner);
 
     (*G_OBJECT_CLASS (mpvradio_banner_parent_class)->finalize) (object);
 }

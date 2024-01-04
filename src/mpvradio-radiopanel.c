@@ -1,10 +1,42 @@
+#include "config.h"
+
 #include "glib.h"
 #include "gtk/gtk.h"
 
 #include "mpvradio-common.h"
 #include "mpvradio-banner.h"
 
-extern GHashTable *playlist_table;
+extern GHashTable *playlist_table, *playlist_logo_table;
+
+/*
+ * キャッシュディレクトリをチェックしてlogo(ファイル名)を得る
+ */
+ GHashTable *banner_logo_set_up (void)
+{
+    GHashTable *bannertable;
+    gchar *name, **n, *cachedir, *logofile, *key;
+    GDir *d;
+
+    cachedir = g_build_filename (g_get_user_cache_dir (), PACKAGE,
+                                                            "logo",
+                                                            NULL);
+    bannertable = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+    if ((d = g_dir_open (cachedir, 0, NULL)) != NULL) {
+        while ((name = g_dir_read_name (d)) != NULL) {
+            n = g_strsplit (name, ".", 0);
+            key = g_strdup (n[0]); g_strfreev (n);
+            logofile = g_build_filename (cachedir, name, NULL);
+            g_hash_table_replace (bannertable, key, logofile);
+        }
+        g_dir_close (d);
+    }
+    g_free (cachedir);
+    g_print ("hoge");
+    return bannertable;
+}
+
+
+
 
 /*
  * flow_box の選択された要素上で何か起きた
@@ -20,10 +52,9 @@ checkchild (GtkWidget *widget, gpointer data)
     gpointer url;
     //~ if (GTK_IS_LABEL (widget)) {
     if (MPVRADIO_IS_BANNER (widget)) {
-        //~ url = g_hash_table_lookup (playlist_table, gtk_label_get_text (widget));
-        url = g_hash_table_lookup (playlist_table, mpvradio_banner_get_name (widget));
-        //~ g_print ("label : %s   url : %s\n",
-                    //~ gtk_label_get_text (widget), (gchar*)url);
+        url = mpvradio_banner_get_url (MPVRADIO_BANNER(widget));
+        g_print ("label : %s   url : %s\n",
+                    mpvradio_banner_get_name (widget), (gchar*)url);
         //~ g_idle_add (mpvradio_common_mpv_play, url);
         mpvradio_common_mpv_play (url);
     }
@@ -59,7 +90,8 @@ GtkWidget *
 mpvradio_radiopanel_new (void)
 {
     GtkWidget *btn, *grid;
-    gpointer station, url;
+    gpointer station, url, banner;
+    gchar *st, **st0;
 
     grid = gtk_flow_box_new ();
     gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(grid),GTK_SELECTION_SINGLE);
@@ -67,7 +99,7 @@ mpvradio_radiopanel_new (void)
     gtk_flow_box_set_activate_on_single_click (GTK_FLOW_BOX(grid), TRUE);
     gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(grid), 2);
     gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(grid), 2);
-	gtk_flow_box_set_max_children_per_line (GTK_FLOW_BOX(grid), 6);
+    gtk_flow_box_set_max_children_per_line (GTK_FLOW_BOX(grid), 6);
     // ラベルにてボタンクリックと等価の動作を行うための準備
     g_signal_connect (G_OBJECT(grid), "child-activated",
                 G_CALLBACK(child_activated_cb), NULL);
@@ -86,13 +118,17 @@ mpvradio_radiopanel_new (void)
     for (;curr != NULL;curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
-            
-            //~ btn = gtk_label_new (curr->data);
-            //~ gtk_label_set_width_chars (GTK_LABEL(btn), 10);
-            //~ gtk_label_set_max_width_chars (GTK_LABEL(btn), 20);
-            //~ gtk_label_set_line_wrap (GTK_LABEL(btn), TRUE);
 
-            btn = mpvradio_banner_new_with_data (GTK_ORIENTATION_VERTICAL,2,curr->data,NULL);// url not use
+            st = g_path_get_basename (url);
+            st0 = g_strsplit (st, ".", 0);
+
+            banner = g_hash_table_lookup (playlist_logo_table, st0[0]);
+
+            g_strfreev (st0);
+            g_free (st);
+
+            btn = mpvradio_banner_new_with_data (GTK_ORIENTATION_VERTICAL, 2,
+                            curr->data, (gchar*)url, (gchar*)banner);
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
         }
     }
