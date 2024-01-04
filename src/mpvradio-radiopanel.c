@@ -2,6 +2,7 @@
 #include "gtk/gtk.h"
 
 #include "mpvradio-common.h"
+#include "mpvradio-banner.h"
 
 extern GHashTable *playlist_table;
 
@@ -17,8 +18,10 @@ static void
 checkchild (GtkWidget *widget, gpointer data)
 {
     gpointer url;
-    if (GTK_IS_LABEL (widget)) {
-        url = g_hash_table_lookup (playlist_table, gtk_label_get_text (widget));
+    //~ if (GTK_IS_LABEL (widget)) {
+    if (MPVRADIO_IS_BANNER (widget)) {
+        //~ url = g_hash_table_lookup (playlist_table, gtk_label_get_text (widget));
+        url = g_hash_table_lookup (playlist_table, mpvradio_banner_get_name (widget));
         //~ g_print ("label : %s   url : %s\n",
                     //~ gtk_label_get_text (widget), (gchar*)url);
         //~ g_idle_add (mpvradio_common_mpv_play, url);
@@ -83,10 +86,13 @@ mpvradio_radiopanel_new (void)
     for (;curr != NULL;curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
-            btn = gtk_label_new (curr->data);
-            gtk_label_set_width_chars (GTK_LABEL(btn), 10);
-            gtk_label_set_max_width_chars (GTK_LABEL(btn), 20);
-            gtk_label_set_line_wrap (GTK_LABEL(btn), TRUE);
+            
+            //~ btn = gtk_label_new (curr->data);
+            //~ gtk_label_set_width_chars (GTK_LABEL(btn), 10);
+            //~ gtk_label_set_max_width_chars (GTK_LABEL(btn), 20);
+            //~ gtk_label_set_line_wrap (GTK_LABEL(btn), TRUE);
+
+            btn = mpvradio_banner_new_with_data (GTK_ORIENTATION_VERTICAL,2,curr->data,NULL);// url not use
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
         }
     }

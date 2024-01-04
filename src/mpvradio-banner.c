@@ -22,7 +22,7 @@
 #include <glib/gstdio.h>
 #include "glib.h"
 #include "gtk/gtk.h"
-
+#include "gdk/gdk.h"
 #include "mpvradio-banner.h"
 
 struct _MpvradioBannerClass
@@ -63,20 +63,22 @@ mpvradio_banner_new (GtkOrientation orientation, gint spacing)
 GtkWidget *
 mpvradio_banner_new_with_data (GtkOrientation orientation, gint spacing, gchar *name, gchar *url)
 {
-    GtkWidget *self = mpvradio_banner_new (orientation, spacing);
+    MpvradioBanner *self = MPVRADIO_BANNER (mpvradio_banner_new (orientation, spacing));
 
     mpvradio_banner_set_name (self, name);
     mpvradio_banner_set_url (self, url);
 
     GdkPixbuf *pixbuf, *buf2;
-    gint banner_width, banner_height = 64;
+    gint banner_width = 128, banner_height = 64;
 
     // url の末尾を元にキャッシュリストからイメージファイルを漁ってくる処理を入れる
-    pixbuf = gdk_pixbuf_from_file (/*banner image cache file*/, NULL);
-    if (pixbuf != NULL) {
-        buf2 = gdk_pixbuf_scale_simple (pixbuf, banner_width, banner_height, GDK_INTERP_BILINEAR);
-    }
-    self->image = gtk_image_new_from_pixbuf (buf2);
+    //~ pixbuf = gdk_pixbuf_from_file (/*banner image cache file*/, NULL);
+    pixbuf = gdk_pixbuf_new_from_file ("/home/sakai/.cache/mpvradio/logo/JOAK-FM.png", NULL);// test用
+    //~ if (pixbuf != NULL) {
+        //~ buf2 = gdk_pixbuf_scale_simple (pixbuf, banner_width, banner_height, GDK_INTERP_BILINEAR);
+    //~ }
+    //~ self->image = gtk_image_new_from_pixbuf (buf2);
+    self->image = gtk_image_new_from_pixbuf (pixbuf);
     g_object_unref (pixbuf);
     g_object_unref (buf2);
 
@@ -94,7 +96,7 @@ mpvradio_banner_get_name (MpvradioBanner *self)
     return self->name;
 }
 
-void
+gchar *
 mpvradio_banner_get_url (MpvradioBanner *self)
 {
     return self->url;
@@ -147,7 +149,7 @@ mpvradio_banner_dispose (GObject *object)
 static void
 mpvradio_banner_finalize (GObject *object)
 {
-    MpvradioBanner *self = MENUTOOL_ITEM (object);
+    MpvradioBanner *self = MPVRADIO_BANNER (object);
 
     g_free (self->name);
     g_free (self->url);
