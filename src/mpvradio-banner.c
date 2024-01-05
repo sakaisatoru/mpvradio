@@ -72,7 +72,8 @@ mpvradio_banner_new_with_data (GtkOrientation orientation, gint spacing,
     mpvradio_banner_set_banner (self, banner);
 
     //~ GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (banner, NULL);
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size (banner, -1, 64, NULL);
+    //~ GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size (banner, -1, 64, NULL);
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size (banner, 216, -1, NULL);// radiko各局のバナーのwidthが216
     self->image = gtk_image_new_from_pixbuf (pixbuf);
     g_object_unref (pixbuf);
 

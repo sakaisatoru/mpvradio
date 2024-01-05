@@ -11,7 +11,7 @@ extern GHashTable *playlist_table, *playlist_logo_table;
 /*
  * キャッシュディレクトリをチェックしてlogo(ファイル名)を得る
  */
- GHashTable *banner_logo_set_up (void)
+GHashTable *banner_logo_set_up (void)
 {
     GHashTable *bannertable;
     gchar *name, **n, *cachedir, *logofile, *key;
@@ -31,11 +31,8 @@ extern GHashTable *playlist_table, *playlist_logo_table;
         g_dir_close (d);
     }
     g_free (cachedir);
-    g_print ("hoge");
     return bannertable;
 }
-
-
 
 
 /*
@@ -50,11 +47,8 @@ static void
 checkchild (GtkWidget *widget, gpointer data)
 {
     gpointer url;
-    //~ if (GTK_IS_LABEL (widget)) {
     if (MPVRADIO_IS_BANNER (widget)) {
         url = mpvradio_banner_get_url (MPVRADIO_BANNER(widget));
-        g_print ("label : %s   url : %s\n",
-                    mpvradio_banner_get_name (widget), (gchar*)url);
         //~ g_idle_add (mpvradio_common_mpv_play, url);
         mpvradio_common_mpv_play (url);
     }
@@ -119,6 +113,7 @@ mpvradio_radiopanel_new (void)
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
 
+            // urlの末尾をキーにしてlogoのファイル名を得る
             st = g_path_get_basename (url);
             st0 = g_strsplit (st, ".", 0);
 
