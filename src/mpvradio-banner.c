@@ -82,8 +82,8 @@ mpvradio_banner_new_with_data (GtkOrientation orientation, gint spacing,
     gtk_label_set_max_width_chars (GTK_LABEL(self->label), 20);
     gtk_label_set_line_wrap (GTK_LABEL(self->label), TRUE);
 
-    gtk_box_pack_start (GTK_BOX(self), self->image, FALSE, TRUE, 10);
-    gtk_box_pack_start (GTK_BOX(self), self->label, FALSE, TRUE, 5);
+    gtk_box_pack_start (GTK_BOX(self), self->image, TRUE, TRUE, 0);
+    gtk_box_pack_end (GTK_BOX(self), self->label, TRUE, TRUE, 0);
 
     return GTK_WIDGET(self);
 }

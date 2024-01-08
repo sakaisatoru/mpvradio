@@ -122,7 +122,7 @@ mpvradio_radiopanel_new (void)
             g_strfreev (st0);
             g_free (st);
 
-            btn = mpvradio_banner_new_with_data (GTK_ORIENTATION_VERTICAL, 2,
+            btn = mpvradio_banner_new_with_data (GTK_ORIENTATION_VERTICAL, 16,
                             curr->data, (gchar*)url, (gchar*)banner);
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);
         }

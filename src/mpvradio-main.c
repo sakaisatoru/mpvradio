@@ -48,15 +48,12 @@
 //~ #include "mpvradio-playlist.h"
 #include "mpvradio-radiopanel.h"
 
-GtkWindow *radikopanel;
-GtkWindow *selectergrid;
 XAppStatusIcon *appindicator;       // LinuxMint 専用
 GtkEntryBuffer *infomessage;             // IPC受け取り後の格納用
 
-static GKeyFile *kconf;
-
-
 GtkWidget *volume_up_button, *volume_down_button;
+
+static GKeyFile *kconf;
 
 static gpointer mpvradio_eventmonitor_gt (gpointer n);
 static void mpvradio_cb (GtkWidget *menuitem, gpointer user_data);
@@ -97,6 +94,8 @@ volume_value_change_cb (GtkScaleButton *button,
         g_strdup_printf ("{\"command\": [\"set_property\",\"volume\",%d]}\x0a", (uint32_t)(value*100.));
     mpvradio_ipc_send (message);
     g_free (message);
+
+    g_key_file_set_double (kconf, "startup", "volume", value);
 }
 
 #if 0
@@ -201,27 +200,16 @@ void infotext_inserted_text_cb (GtkEntryBuffer *buffer,
 GtkWindow *
 mpvradio_window_new (GtkApplication *application)
 {
-    struct mpd_connection *cn;
-    struct mpd_playlist *pl;
-    struct mpd_entry *en;
-    struct mpd_song *sn;
-    struct mpd_status *st;
-
-    int i, width, height;
-    double vol = 0.5;
-
-    GtkWidget *window, *btn, *header, *scroll, *box;
-    GtkWidget *tapescroll, *tapelist;
+    GtkWidget *window, *btn, *header, *scroll, *box, *selectergrid;
     GtkWidget *infobar, *infotext, *infocontainer;
     GtkWidget *volbtn, *stopbtn;
-    GMenuModel *menumodel;
 
-    GtkWidget *stack, *stackswitcher;
-
-    gint x,y;
+    int width  = g_key_file_get_integer (kconf, "window", "width", NULL);
+    int height = g_key_file_get_integer (kconf, "window", "height", NULL);
+    double vol = g_key_file_get_double (kconf, "startup", "volume", NULL);
 
     window = gtk_application_window_new (application);
-    gtk_window_set_default_size (GTK_WINDOW(window), 640, 480);
+    gtk_window_set_default_size (GTK_WINDOW(window), width, height);
     gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     //~ g_signal_connect (G_OBJECT(window), "destroy",
                         //~ G_CALLBACK(radiopanel_destroy_cb), NULL);
@@ -230,13 +218,11 @@ mpvradio_window_new (GtkApplication *application)
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();
-    //~ gtk_scale_button_set_value (volbtn, 1.0);
     g_signal_connect (G_OBJECT(volbtn), "value-changed",
                         G_CALLBACK(volume_value_change_cb), NULL);
-
     volume_up_button = gtk_scale_button_get_plus_button (GTK_SCALE_BUTTON (volbtn));
     volume_down_button = gtk_scale_button_get_minus_button (GTK_SCALE_BUTTON (volbtn));
-
+    gtk_scale_button_set_value (GTK_SCALE_BUTTON (volbtn), vol);
 
     // ストップボタン
     stopbtn = gtk_button_new_from_icon_name ("media-playback-stop-symbolic",
@@ -258,10 +244,7 @@ mpvradio_window_new (GtkApplication *application)
     /* 情報表示用 */
     infotext = gtk_entry_new_with_buffer (infomessage);
     gtk_widget_set_can_focus (infotext, FALSE);
-
     selectergrid = mpvradio_radiopanel_new ();
-
-    gtk_scale_button_set_value (GTK_SCALE_BUTTON (volbtn), vol);
 
     scroll = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_kinetic_scrolling (GTK_SCROLLED_WINDOW (scroll), TRUE);
@@ -269,15 +252,14 @@ mpvradio_window_new (GtkApplication *application)
     gtk_scrolled_window_set_overlay_scrolling (GTK_SCROLLED_WINDOW (scroll), TRUE);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_container_add (GTK_CONTAINER (scroll), selectergrid);
-    //~ gtk_widget_set_size_request (scroll, 400, 400);
 
     box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 2);
-    gtk_box_pack_start (box, infotext, FALSE, TRUE, 0);
-    gtk_box_pack_start (box, scroll, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX(box), infotext, FALSE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX(box), scroll, TRUE, TRUE, 0);
 
     gtk_container_add (GTK_CONTAINER(window), box);
 
-    return window;
+    return GTK_WINDOW(window);
 }
 
 
@@ -430,6 +412,11 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 
     windows = gtk_application_get_windows (app);
     while (windows != NULL && GTK_IS_WINDOW(windows->data)) {
+        int width, height;
+        gtk_window_get_size (windows->data, &width, &height);
+        g_key_file_set_integer (kconf, "window", "width", width);
+        g_key_file_set_integer (kconf, "window", "height", height);
+
         if (gtk_widget_in_destruction (windows->data) == FALSE) {
             // メインウィンドウを閉じた場合は、２重に破壊してセグるので
             // 破壊中かどうかチェックする
@@ -458,11 +445,12 @@ static void
 mpvradio_activate_cb (GtkApplication *app, gpointer data)
 {
     GList *windows;
+    GtkWindow *radikopanel;
     windows = gtk_application_get_windows (app);
     if (windows == NULL) {
         radikopanel = mpvradio_window_new (app);
     }
-    gtk_widget_show_all (radikopanel);
+    gtk_widget_show_all (GTK_WIDGET(radikopanel));
     gtk_window_present (radikopanel);
 }
 
