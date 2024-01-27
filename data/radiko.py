@@ -76,14 +76,27 @@ def gen_temp_chunk_m3u8_url( url, auth_token ):
     # embed()
     return lines[0]
 
+tokenfile = '/run/user/1000/radiko_token'
+try:
+    with open(tokenfile) as f:
+        token = f.read()
+except FileNotFoundError:
+    token = ''
 
-res = auth1()
-ret = get_partial_key(res)
-token = ret[1]
-partialkey = ret[0]
-auth2( partialkey, token )
 url = 'http://f-radiko.smartstream.ne.jp/{}/_definst_/simul-stream.stream/playlist.m3u8'.format(argv[1])
-m3u8 = gen_temp_chunk_m3u8_url( url ,token)
+try:
+    m3u8 = gen_temp_chunk_m3u8_url(url ,token)
+except urllib.error.HTTPError:
+    res = auth1()
+    ret = get_partial_key(res)
+    token = ret[1]
+    partialkey = ret[0]
+    auth2( partialkey, token )
+
+    with open(tokenfile,'w') as f:
+        f.write(token)
+    # ~ print("reload token")
+    m3u8 = gen_temp_chunk_m3u8_url(url ,token)
 
 # ~ os.system( f"mpv  -http-header-fields='X-Radiko-Authtoken:{token}'  '{m3u8}'")
 
@@ -92,7 +105,7 @@ s1 = f"{m3u8}"
 s2="{%s}\n" % '"command": ["loadfile", "{0}"]'.format(s1)
 
 s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-s.connect("/run/user/1000/mpvsocket")
+s.connect('/run/user/1000/mpvsocket')
 s.send(s2.encode())
 d = s.recv(1024)
 s.close()
