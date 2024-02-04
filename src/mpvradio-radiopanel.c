@@ -48,6 +48,8 @@ checkchild (GtkWidget *widget, gpointer data)
 {
     gpointer url;
     if (MPVRADIO_IS_BANNER (widget)) {
+        mpvradio_common_mpv_play (DATADIR"/mpvradio/sounds/button57.mp3");
+        usleep (0.3*1e6);
         url = mpvradio_banner_get_url (MPVRADIO_BANNER(widget));
         //~ g_idle_add (mpvradio_common_mpv_play, url);
         mpvradio_common_mpv_play (url);
@@ -59,6 +61,7 @@ child_activated_cb (GtkFlowBox      *box,
                            GtkFlowBoxChild *child,
                            gpointer         user_data)
 {
+    //~ system ("bash -c \"aplay button57.wav >& /dev/null\"");  // beep音の代わり
     // フラグを参照して同一局の連続呼び出しを避ける
     if (child_selected_change == TRUE ||
             mpvradio_common_check_mpv_is_play () == FALSE) {

@@ -1,3 +1,6 @@
+BEEP音
+http://www.kurage-kosho.info/guide.html
+
 ipcにてmpvを制御する
 mpv --idle --input-ipc-server=/run/user/1000/mpvsocket --no-video &
 
