@@ -7,7 +7,7 @@ pixmapsdir       = $(datadir)/pixmaps
 pixmaps_DATA     = mpvradio.png
 
 pluginsdir		 = $(datadir)/mpvradio/plugins
-plugins_DATA	 = radiko.py
+plugins_DATA	 = radiko.py afn.sh
 
 playlistsdir	 = $(datadir)/mpvradio/playlists
 playlists_DATA	 = radio.m3u
@@ -22,4 +22,4 @@ EXTRA_DIST = \
 	$(pixmaps_DATA) $(plugins_DATA) $(playlists_DATA) $(scripts_DATA) $(sounds_DATA)
 
 install-data-hook:
-	chmod a+x $(pluginsdir)/$(plugins_DATA)
+	chmod a+x $(pluginsdir)/*
