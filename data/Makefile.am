@@ -7,7 +7,7 @@ pixmapsdir       = $(datadir)/pixmaps
 pixmaps_DATA     = mpvradio.png
 
 pluginsdir		 = $(datadir)/mpvradio/plugins
-plugins_DATA	 = radiko.py afn.sh
+plugins_DATA	 = radiko.py afn.sh afn.py
 
 playlistsdir	 = $(datadir)/mpvradio/playlists
 playlists_DATA	 = radio.m3u

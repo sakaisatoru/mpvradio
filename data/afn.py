@@ -1,24 +1,25 @@
-import requests
-from html.parser import HTMLParser
+#! /usr/bin/env python3
+import requests, re, socket
+from sys import argv
+ip = re.compile("<ip>(.+?)</ip>")
 
-class TestParser(HTMLParser):
-    def __init__(self):
-        self.id = ''
-        self.rawdata =''
+# URLを指定
+url = "https://playerservices.streamtheworld.com/api/livestream?station={0}&transports=http,hls&version=1.8".format(argv[1])
 
-    def handle_starttag(self, tag, attrs):
-        self.id = tag
+# リクエスト送信
+response = requests.get(url)
 
-    def handle_endtag(self, tag):
-        self.id = ''
+pos = 0
+m = re.search(ip,response.text)
+if m != None:
+    s2='{%s}\n' % '\"command\": [\"loadfile\", \"http://{0}/{1}.mp3"]'.format(m.group(1),argv[1])
+    # ~ print(s2)
+else:
+    s2='{%s}\n' % '\"command\": [\"loadfile\", \"http://{0}.mp3"]'.format(argv[1])
 
-    def handle_data(self, data):
-        if self.id == 'ip':
-            print(data)
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.connect('/run/user/1000/mpvsocket')
+s.send(s2.encode())
+d = s.recv(1024)
+s.close()
 
-url = 'https://playerservices.streamtheworld.com/api/livestream?station=AFN_JOEP&transports=http,hls&version=1.8'
-
-r = requests.get(url)
-parser = TestParser()
-r.encoding = 'utf-8'
-parser.feed(r.text)

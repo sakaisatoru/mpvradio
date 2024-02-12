@@ -4,13 +4,15 @@
 mms://hdv.nkansai.tv/smile
 
 #EXTINF:-1,USA / AFN TOKYO
-plugin:/afn.sh/AFNP_TKO
+plugin:/afn.py/AFNP_TKO
 #EXTINF:-1,USA / AFN Gravity
-plugin:/afn.sh/AFN_GRV
+plugin:/afn.py/AFN_GRV
 #EXTINF:-1,USA / AFN Joe Radio
-plugin:/afn.sh/AFN_JOEP
+plugin:/afn.py/AFN_JOEP
 #EXTINF:-1,USA / AFN Hot AC
-plugin:/afn.sh/AFN_HOTP
+plugin:/afn.py/AFN_HOTP
+#EXTINF:-1,USA / AFN Legacy
+plugin:/afn.py/AFN_LGYP
 
 #EXTINF:-1,radioparadise.com(main mix) / radioparadaise.com(main mix)
 http://stream.radioparadise.com/aac-320
