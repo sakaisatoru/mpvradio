@@ -1,17 +1,30 @@
-BEEP音
-http://www.kurage-kosho.info/guide.html
+mpvradio
 
-ipcにてmpvを制御する
-mpv --idle --input-ipc-server=/run/user/1000/mpvsocket --no-video &
+mpvをバックエンドに使った、ネットラジオプレイヤーのフロントエンドです。
 
-echo '{"command": ["loadfile","http://stream-dc1.radioparadise.com/rp_96m.ogg"]}' | socat - /run/user/1000/mpvsocket
+mpvで扱えるものであれば、だいたい再生できるはずです。（例 youtube等）
+radiko 及び AFN については、接続先を得るのにプラグインを使用しています。
 
-echo '{"command": ["stop"]}' | socat - /run/user/1000/mpvsocket
+参考・引用URL
+
+    BEEP音
+        http://www.kurage-kosho.info/guide.html
 
 
-AFNの配信URLを得る方法
-横田エアベースのXML例：
-https://playerservices.streamtheworld.com/api/livestream?station=AFNP_TKO&transports=http,hls&version=1.8
+    AFNの配信URLを得る方法
+        http://nakkara.cocolog-nifty.com/nakkara/2021/04/post-1d1379.html
 
-fmstream で調べる：
-curl -sSL 'http://fmstream.org/index.php?s=afn' | grep -oE "[^']+AFN[^']+\.(mp3|aac)" | sed 's/\\//g; s#^#http://#'
+
+    fmstream
+        https://fmstream.org/
+        wget -q -O - 'http://fmstream.org/index.php?s=afn' | grep -oE "[^']+AFN[^']+\.(mp3|aac)" | sed 's/\\//g; s#^#http://#'
+
+
+    ipcでmpvを制御する
+        https://mpv.io/manual/stable/#json-ipc
+
+        mpv --idle --input-ipc-server=/run/user/1000/mpvsocket --no-video &
+        echo '{"command": ["loadfile","http://stream-dc1.radioparadise.com/rp_96m.ogg"]}' | socat - /run/user/1000/mpvsocket
+        echo '{"command": ["stop"]}' | socat - /run/user/1000/mpvsocket
+
+
