@@ -273,10 +273,8 @@ quicktune_activated (GSimpleAction *action,
     if (windows != NULL) {
         gchar *uri = mpvradio_adduri_quicktune (windows->data);
         if (uri != NULL) {
-            gchar *tmp = g_strdup_printf ("{\"command\": [\"loadfile\",\"%s\"]}\x0a", uri);
+            mpvradio_common_mpv_play (uri);
             g_free (uri);
-            mpvradio_ipc_send (tmp);
-            g_free (tmp);
         }
     }
 }
