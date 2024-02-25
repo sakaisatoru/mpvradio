@@ -73,6 +73,7 @@ GKeyFile *load_config_file (void)
             "[window]\n" \
             "width=640\n" \
             "height=480\n" \
+            "statusicon=false\n"    \
             "\n"    \
             "[startup]\n" \
             "volume=0.5\n" \

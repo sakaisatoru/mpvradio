@@ -47,7 +47,7 @@
 #include "mpvradio-common.h"
 
 /*
- * デスクトップ用ステータスアイコン (Linux Mint 専用)
+ * デスクトップ用ステータスアイコン (Depends on LinuxMint's libxapp)
  * シグナルコールバック
  */
 static void

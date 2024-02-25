@@ -74,8 +74,8 @@ void mpvradio_ipc_remove_socket (void)
  * IPC サーバー
  * 別スレッドで動かすこと
  */
-extern XAppStatusIcon *appindicator;       // LinuxMint 専用
-extern GtkEntryBuffer *infomessage;             // IPC受け取り後の格納用
+extern XAppStatusIcon *appindicator;    // Depends on LinuxMint's libxapp
+extern GtkEntryBuffer *infomessage;     // IPC受け取り後の格納用
 
 static void destroy_notify (gpointer hoge)
 {
@@ -86,7 +86,9 @@ static void destroy_notify (gpointer hoge)
 static gboolean source_func (gpointer fuga)
 {
     //~ g_print ("ソースです。引数は %s です。\n",fuga);
-    xapp_status_icon_set_tooltip_text (appindicator, fuga);
+    if (XAPP_IS_STATUS_ICON(appindicator)) {
+        xapp_status_icon_set_tooltip_text (appindicator, fuga);
+    }
     gtk_entry_buffer_set_text (infomessage, fuga, -1);
     return FALSE;   // FALSEを返さないと繰り返し実行されてしまう。
 }

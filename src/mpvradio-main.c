@@ -48,8 +48,8 @@
 //~ #include "mpvradio-playlist.h"
 #include "mpvradio-radiopanel.h"
 
-XAppStatusIcon *appindicator;       // LinuxMint 専用
-GtkEntryBuffer *infomessage;             // IPC受け取り後の格納用
+XAppStatusIcon *appindicator;       // Depends on LinuxMint's libxapp
+GtkEntryBuffer *infomessage;        // IPC受け取り後の格納用
 
 GtkWidget *volume_up_button, *volume_down_button;
 
@@ -279,6 +279,18 @@ quicktune_activated (GSimpleAction *action,
     }
 }
 
+static void
+statusicon_activated (GSimpleAction *action,
+                       GVariant      *parameter,
+                       gpointer       app)
+{
+    if (XAPP_IS_STATUS_ICON(appindicator)) {
+        xapp_status_icon_set_visible (appindicator,
+            xapp_status_icon_get_visible (appindicator)? FALSE:TRUE);
+        g_key_file_set_boolean (kconf, "window", "statusicon",
+            xapp_status_icon_get_visible (appindicator));
+    }
+}
 
 static void
 about_activated (GSimpleAction *action,
@@ -318,6 +330,7 @@ quit_activated (GSimpleAction *action,
 static GActionEntry app_entries[] =
 {
   { "quicktune", quicktune_activated, NULL, NULL, NULL },
+  { "statusicon", statusicon_activated, NULL, NULL, NULL },
   { "about", about_activated, NULL, NULL, NULL },
   { "quit", quit_activated, NULL, NULL, NULL }
 };
@@ -330,6 +343,9 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
     GMenuModel *app_menu, *popup_menu;
     GtkWidget *menu, *menu2;
 
+    /* 設定ファイル */
+    kconf = load_config_file ();
+
     /* アプリケーションメニューの構築 */
     builder = gtk_builder_new_from_string (
     "<interface>"
@@ -339,6 +355,10 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
       "<item>"
         "<attribute name=\"label\" translatable=\"yes\">QuickTune</attribute>"
         "<attribute name=\"action\">app.quicktune</attribute>"
+      "</item>"
+      "<item>"
+        "<attribute name=\"label\" translatable=\"yes\">StatusIcon</attribute>"
+        "<attribute name=\"action\">app.statusicon</attribute>"
       "</item>"
     "</section>"
     "<section>"
@@ -369,8 +389,12 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
     app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu"));
     gtk_application_set_app_menu (app, app_menu);
 
-    /* デスクトップ用ステータスアイコン (Linux Mint 専用) */
+    /* デスクトップ用ステータスアイコン (Depends on LinuxMint's libxapp) */
+    //~ appindicator = g_key_file_get_boolean (kconf, "window", "statusicon", NULL)?
+            //~ mpvradio_statusicon_new (app):NULL;
     appindicator = mpvradio_statusicon_new (app);
+    xapp_status_icon_set_visible (appindicator,
+        g_key_file_get_boolean (kconf, "window", "statusicon", NULL));
 
     g_object_unref (builder);
 
@@ -384,8 +408,6 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
     mpvradio_recv_stop = FALSE;
     mpvradio_connection_in = FALSE;
 
-    /* 設定ファイル */
-    kconf = load_config_file ();
 
     /* ラジオ局一覧 (playlist)の読み込み */
     mpvradio_read_playlist ();
@@ -406,7 +428,9 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 
     mpvradio_common_stop ();    // appindicatorが存在するうちに呼ぶ事
 
-    g_object_unref (appindicator);
+    if (XAPP_IS_STATUS_ICON(appindicator)) {
+        g_object_unref (appindicator);
+    }
 
     windows = gtk_application_get_windows (app);
     while (windows != NULL && GTK_IS_WINDOW(windows->data)) {
