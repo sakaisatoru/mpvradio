@@ -98,15 +98,6 @@ volume_value_change_cb (GtkScaleButton *button,
     g_key_file_set_double (kconf, "startup", "volume", value);
 }
 
-#if 0
-static void
-radiopanel_destroy_cb (GtkWidget *widget, gpointer data)
-{
-    if (GTK_IS_WINDOW (widget)) {
-        g_message ("destroy_cb : %s.", gtk_window_get_title (widget));
-    }
-}
-#endif
 
 /*
  * playlist の内容をハッシュテーブルに格納する
@@ -194,6 +185,20 @@ void infotext_inserted_text_cb (GtkEntryBuffer *buffer,
 }
 
 
+static gboolean
+radiopanel_delete_event_cb (GtkWidget *widget, GdkEvent *event,
+                                                gpointer app)
+{
+    if (XAPP_IS_STATUS_ICON(appindicator)) {
+        if (xapp_status_icon_get_visible (appindicator)) {
+            // StatusIconが有効であれば、パネルを隠して終わる
+            gtk_widget_hide (widget);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /*
  * 選局パネル(ウィンドウ)の作成
  */
@@ -211,10 +216,8 @@ mpvradio_window_new (GtkApplication *application)
     window = gtk_application_window_new (application);
     gtk_window_set_default_size (GTK_WINDOW(window), width, height);
     gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    //~ g_signal_connect (G_OBJECT(window), "destroy",
-                        //~ G_CALLBACK(radiopanel_destroy_cb), NULL);
     g_signal_connect (G_OBJECT(window), "delete-event",
-                        G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+                        G_CALLBACK(radiopanel_delete_event_cb), application);
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();

@@ -9,6 +9,7 @@ Makefile.in
 /ylwrap
 .deps/
 .dirstamp
+/config.h
 
 # http://www.gnu.org/software/autoconf
 
