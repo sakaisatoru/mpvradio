@@ -53,7 +53,7 @@ GtkEntryBuffer *infomessage;        // IPC受け取り後の格納用
 
 GtkWidget *volume_up_button, *volume_down_button;
 
-static GKeyFile *kconf;
+static GKeyFile *kconf = NULL;
 
 static gpointer mpvradio_eventmonitor_gt (gpointer n);
 static void mpvradio_cb (GtkWidget *menuitem, gpointer user_data);
@@ -78,6 +78,13 @@ extern GKeyFile *load_config_file (void);
 extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 
 extern GHashTable *banner_logo_set_up (void);
+
+
+typedef struct {
+    gchar *playlist;
+    gboolean version;
+} AppOptions;
+
 
 /*
  * 音量調整
@@ -158,7 +165,6 @@ mpvradio_read_playlist (void)
                         flag = FALSE;
                     }
                 }
-
             }
             fclose (fp);
         }
@@ -469,21 +475,43 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 static void
 mpvradio_activate_cb (GtkApplication *app, gpointer data)
 {
-    GList *windows;
-    GtkWindow *radikopanel;
 g_message ("activate.");
-    windows = gtk_application_get_windows (app);
-    if (windows == NULL) {
-        radikopanel = mpvradio_window_new (app);
-    }
-    else {
-        radikopanel = GTK_WINDOW(windows->data);
-    }
+    GList *windows = gtk_application_get_windows (app);
+    GtkWindow *radikopanel = (windows == NULL)? mpvradio_window_new (app):
+                                            GTK_WINDOW(windows->data);
     gtk_widget_show_all (GTK_WIDGET(radikopanel));
     gtk_window_present (radikopanel);
 }
 
 
+static void
+mpvradio_init_cmd_parameters(GOptionContext *ctx, AppOptions *options)
+{
+    const GOptionEntry cmd_params[] = {
+        {
+            .long_name = "load",
+            .short_name = 'l',
+            .flags = G_OPTION_FLAG_NONE,     // see `GOptionFlags`
+            .arg = G_OPTION_ARG_STRING,        // type of option (see `GOptionArg`)
+            .arg_data = &(options->playlist),// store data here
+            .description = "プレイリストを再生します",
+            .arg_description = NULL,
+        },
+        {
+            .long_name = "version",
+            .short_name = 'v',
+            .flags = G_OPTION_FLAG_NONE,     // see `GOptionFlags`
+            .arg = G_OPTION_ARG_NONE,        // type of option (see `GOptionArg`)
+            .arg_data = &(options->version),// store data here
+            .description = "バージョン番号",
+            .arg_description = NULL,
+        },
+        {NULL}
+    };
+
+    g_option_context_add_main_entries (ctx, cmd_params, NULL);
+    g_option_context_add_group (ctx, gtk_get_option_group (TRUE));
+}
 
 
 /*
@@ -498,6 +526,24 @@ int main (int argc, char **argv)
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
 
+    GError *error = NULL;
+    static AppOptions mpvradio_options = { .playlist = NULL, .version = FALSE};
+
+    GOptionContext *options = g_option_context_new ("");
+    mpvradio_init_cmd_parameters (options, &mpvradio_options);
+    if (!g_option_context_parse (options, &argc, &argv, &error)) {
+        g_print ("option parsing failed: %s\n", error->message);
+        exit (1);
+    }
+    if (mpvradio_options.version) {
+        g_print ("%s\n", VERSION);
+        return 0;
+    }
+    if (mpvradio_options.playlist != NULL) {
+        mpvradio_common_mpv_play (mpvradio_options.playlist);
+        g_free (mpvradio_options.playlist);
+    }
+
 #if GLIB_CHECK_VERSION(2,74,0)
     app = gtk_application_new ("com.google.endeavor2wako.mpvradio",
                                             G_APPLICATION_DEFAULT_FLAGS);
@@ -509,6 +555,7 @@ int main (int argc, char **argv)
     g_signal_connect (app, "startup",  G_CALLBACK (mpvradio_startup_cb),  NULL);
     g_signal_connect (app, "shutdown", G_CALLBACK (mpvradio_shutdown_cb), NULL);
     g_signal_connect (app, "activate", G_CALLBACK (mpvradio_activate_cb), NULL);
+
     status = g_application_run (G_APPLICATION(app), 0, NULL);
     g_object_unref (app);
     return status;
