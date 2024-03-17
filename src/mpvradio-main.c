@@ -66,7 +66,6 @@ static gboolean mpvradio_connection_in;
 static const gint button_width = 100;
 static const gint button_height = 48;
 
-
 /* mpvradio_adduri.c */
 extern gchar *mpvradio_adduri_quicktune (GtkWindow *oya);
 //~ extern void mpvradio_adduridialog_destroy (void);
@@ -346,6 +345,7 @@ mpvradio_startup_cb (GtkApplication *app, gpointer user_data)
     GMenuModel *app_menu, *popup_menu;
     GtkWidget *menu, *menu2;
 
+g_message ("startup.");
     /* 設定ファイル */
     kconf = load_config_file ();
 
@@ -471,13 +471,19 @@ mpvradio_activate_cb (GtkApplication *app, gpointer data)
 {
     GList *windows;
     GtkWindow *radikopanel;
+g_message ("activate.");
     windows = gtk_application_get_windows (app);
     if (windows == NULL) {
         radikopanel = mpvradio_window_new (app);
     }
+    else {
+        radikopanel = GTK_WINDOW(windows->data);
+    }
     gtk_widget_show_all (GTK_WIDGET(radikopanel));
     gtk_window_present (radikopanel);
 }
+
+
 
 
 /*
@@ -492,16 +498,18 @@ int main (int argc, char **argv)
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
 
-    app = gtk_application_new ("com.google.endeavor2wako.mpvradio",
 #if GLIB_CHECK_VERSION(2,74,0)
+    app = gtk_application_new ("com.google.endeavor2wako.mpvradio",
                                             G_APPLICATION_DEFAULT_FLAGS);
 #else
+    app = gtk_application_new ("com.google.endeavor2wako.mpvradio",
                                             G_APPLICATION_FLAGS_NONE);
 #endif
+
     g_signal_connect (app, "startup",  G_CALLBACK (mpvradio_startup_cb),  NULL);
     g_signal_connect (app, "shutdown", G_CALLBACK (mpvradio_shutdown_cb), NULL);
     g_signal_connect (app, "activate", G_CALLBACK (mpvradio_activate_cb), NULL);
-    status = g_application_run (G_APPLICATION(app), argc, argv);
+    status = g_application_run (G_APPLICATION(app), 0, NULL);
     g_object_unref (app);
     return status;
 }
