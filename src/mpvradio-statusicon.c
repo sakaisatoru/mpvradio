@@ -161,7 +161,6 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
 }
 
 
-
 XAppStatusIcon *mpvradio_statusicon_new (GtkApplication *app)
 {
     XAppStatusIcon *appindicator = xapp_status_icon_new ();

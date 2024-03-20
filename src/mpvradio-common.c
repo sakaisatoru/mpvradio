@@ -55,7 +55,7 @@ gboolean mpvradio_common_check_mpv_is_play (void)
     //~ er = json_reader_get_error (reader);
     //~ if (er) {g_message ("read member --->\n");g_error (er->message);}
 
-    gchar *mpv_data = json_reader_get_string_value (reader);
+    const gchar *mpv_data = json_reader_get_string_value (reader);
     //~ g_print ("result : %s\n", mpv_data);
     //~ er = json_reader_get_error (reader);
     //~ if (er) {g_message ("get value --->\n");g_error (er->message);}
@@ -88,18 +88,18 @@ void mpvradio_common_stop (void)
 /*
  * 次の曲
  */
-//~ void mpvradio_common_next (void)
-//~ {
-    //~ mpvradio_ipc_send ("{\"command\": [\"playlist-next\"]}\x0a");
-//~ }
+void mpvradio_common_next (void)
+{
+    mpvradio_ipc_send ("{\"command\": [\"playlist-next\"]}\x0a");
+}
 
 /*
  * 前の曲
  */
-//~ void mpvradio_common_prev (void)
-//~ {
-    //~ mpvradio_ipc_send ("{\"command\": [\"playlist-prev\"]}\x0a");
-//~ }
+void mpvradio_common_prev (void)
+{
+    mpvradio_ipc_send ("{\"command\": [\"playlist-prev\"]}\x0a");
+}
 
 
 /*

@@ -30,7 +30,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <glib.h>
 #include <locale.h>
 
 #include "glib/gi18n.h"
@@ -212,7 +211,7 @@ mpvradio_window_new (GtkApplication *application)
 {
     GtkWidget *window, *btn, *header, *scroll, *box, *selectergrid;
     GtkWidget *infobar, *infotext, *infocontainer;
-    GtkWidget *volbtn, *stopbtn;
+    GtkWidget *volbtn, *stopbtn, *forwardbtn, *backwardbtn;
 
     int width  = g_key_file_get_integer (kconf, "window", "width", NULL);
     int height = g_key_file_get_integer (kconf, "window", "height", NULL);
@@ -237,7 +236,14 @@ mpvradio_window_new (GtkApplication *application)
                                                 GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT(stopbtn), "clicked",
                                 G_CALLBACK(mpvradio_common_cb), mpvradio_common_stop);
-
+    forwardbtn = gtk_button_new_from_icon_name ("media-skip-forward-symbolic",
+                                                GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT(stopbtn), "clicked",
+                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_next);
+    backwardbtn = gtk_button_new_from_icon_name ("media-skip-backward-symbolic",
+                                                GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT(stopbtn), "clicked",
+                                G_CALLBACK(mpvradio_common_cb), mpvradio_common_prev);
     header = gtk_header_bar_new ();
     gtk_header_bar_set_decoration_layout (GTK_HEADER_BAR (header), "menu:close");
     gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header), TRUE);
@@ -246,7 +252,9 @@ mpvradio_window_new (GtkApplication *application)
 
     gtk_window_set_titlebar (GTK_WINDOW (window), header);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), volbtn);
+    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), forwardbtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), stopbtn);
+    gtk_header_bar_pack_end (GTK_HEADER_BAR (header), backwardbtn);
 
 
     /* 情報表示用 */

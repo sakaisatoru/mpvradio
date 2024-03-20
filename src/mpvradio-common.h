@@ -26,6 +26,8 @@
 /* mpvradio-common.c */
 extern void mpvradio_common_cb (GtkWidget *widget, gpointer user_data);
 extern void mpvradio_common_stop (void);
+extern void mpvradio_common_next (void);
+extern void mpvradio_common_prev (void);
 extern gboolean mpvradio_common_mpv_play (gpointer url);
 
 extern gboolean mpvradio_common_check_mpv_is_play (void);
