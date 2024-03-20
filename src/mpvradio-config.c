@@ -47,7 +47,7 @@ void save_config_file (GKeyFile *kf)
 
     if (g_key_file_save_to_file (kf, conf_file_name, &err) == FALSE) {
         /* 設定ファイルの保存に失敗しました。*/
-        g_warning (err->message);
+        g_warning ("%s : (save_config_file)", err->message);
         g_clear_error (&err);
     }
     g_free (conf_file_name);
@@ -55,12 +55,12 @@ void save_config_file (GKeyFile *kf)
 
 GKeyFile *load_config_file (void)
 {
-    gchar *conf_file_name, *dir;
+    gchar *conf_file_name;
     GError *err = NULL;
     GKeyFile *kf;
 
-    dir = g_build_filename (g_get_user_config_dir (), PACKAGE, NULL);
-    conf_file_name = g_build_filename (dir, PACKAGE".conf", NULL);
+    conf_file_name = g_build_filename (g_get_user_config_dir (), PACKAGE,
+                                                PACKAGE".conf", NULL);
 
     kf = g_key_file_new ();
     if (g_key_file_load_from_file(kf, conf_file_name,
@@ -86,16 +86,15 @@ GKeyFile *load_config_file (void)
         g_key_file_load_from_data (kf, default_conf, -1,
             G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS,
             NULL);
+        gchar *dir = g_build_filename (g_get_user_config_dir (), PACKAGE, NULL);
         g_mkdir (dir, S_IRWXU);
+        g_free (dir);
         if (g_key_file_save_to_file (kf, conf_file_name, &err) == FALSE) {
-            g_warning (err->message);
+            g_warning ("%s : (load_config_file)", err->message);
             g_clear_error (&err);
         }
     }
-
     g_free (conf_file_name);
-    g_free (dir);
-
     return kf;
 }
 

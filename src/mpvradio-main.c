@@ -450,16 +450,18 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     }
 
     windows = gtk_application_get_windows (app);
-    while (windows != NULL && GTK_IS_WINDOW(windows->data)) {
-        int width, height;
-        gtk_window_get_size (windows->data, &width, &height);
-        g_key_file_set_integer (kconf, "window", "width", width);
-        g_key_file_set_integer (kconf, "window", "height", height);
+    while (windows != NULL) {
+        if (GTK_IS_WINDOW(windows->data)) {
+            int width, height;
+            gtk_window_get_size (GTK_WINDOW(windows->data), &width, &height);
+            g_key_file_set_integer (kconf, "window", "width", width);
+            g_key_file_set_integer (kconf, "window", "height", height);
 
-        if (gtk_widget_in_destruction (windows->data) == FALSE) {
-            // メインウィンドウを閉じた場合は、２重に破壊してセグるので
-            // 破壊中かどうかチェックする
-            gtk_widget_destroy (windows->data);
+            if (gtk_widget_in_destruction (windows->data) == FALSE) {
+                // メインウィンドウを閉じた場合は、２重に破壊してセグるので
+                // 破壊中かどうかチェックする
+                gtk_widget_destroy (windows->data);
+            }
         }
         windows = g_list_next(windows);
     }
