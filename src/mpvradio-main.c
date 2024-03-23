@@ -188,6 +188,14 @@ void infotext_inserted_text_cb (GtkEntryBuffer *buffer,
     g_print ("insert infotext:%s", chars);
 }
 
+static void
+mpvradio_save_window_size (GtkWidget *widget)
+{
+    int width, height;
+    gtk_window_get_size (GTK_WINDOW(widget), &width, &height);
+    g_key_file_set_integer (kconf, "window", "width", width);
+    g_key_file_set_integer (kconf, "window", "height", height);
+}
 
 static gboolean
 radiopanel_delete_event_cb (GtkWidget *widget, GdkEvent *event,
@@ -200,6 +208,7 @@ radiopanel_delete_event_cb (GtkWidget *widget, GdkEvent *event,
             return TRUE;
         }
     }
+    mpvradio_save_window_size (widget);
     return FALSE;
 }
 
@@ -438,6 +447,8 @@ g_message ("startup.");
 }
 
 
+
+
 static void
 mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 {
@@ -452,24 +463,20 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
     windows = gtk_application_get_windows (app);
     while (windows != NULL) {
         if (GTK_IS_WINDOW(windows->data)) {
-            int width, height;
-            gtk_window_get_size (GTK_WINDOW(windows->data), &width, &height);
-            g_key_file_set_integer (kconf, "window", "width", width);
-            g_key_file_set_integer (kconf, "window", "height", height);
-
-            if (gtk_widget_in_destruction (windows->data) == FALSE) {
+            if (gtk_widget_in_destruction (GTK_WIDGET(windows->data)) == FALSE) {
                 // メインウィンドウを閉じた場合は、２重に破壊してセグるので
                 // 破壊中かどうかチェックする
-                gtk_widget_destroy (windows->data);
+                // g_application_quit で destroyしても delete-event が
+                // 発生しないのでここにも処理を書く。
+                mpvradio_save_window_size (GTK_WIDGET(windows->data));
+                gtk_widget_destroy (GTK_WIDGET(windows->data));
             }
         }
         windows = g_list_next(windows);
     }
 
     save_config_file (kconf);
-
     detach_config_file (kconf);
-
 
     mpvradio_ipc_kill_mpv ();
     mpvradio_ipc_remove_socket ();
