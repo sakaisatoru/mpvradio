@@ -2,6 +2,7 @@
 src/mpvradio
 
 Makefile.in
+/Makefile.in
 /ar-lib
 /mdate-sh
 /py-compile
@@ -21,6 +22,7 @@ autom4te.cache
 /config.cache
 /config.guess
 /config.h.in
+/config.h.in~
 /config.log
 /config.status
 /config.sub
