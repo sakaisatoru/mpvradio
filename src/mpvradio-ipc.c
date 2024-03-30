@@ -68,8 +68,6 @@ void mpvradio_ipc_remove_socket (void)
 }
 
 
-
-
 /*
  * IPC サーバー
  * 別スレッドで動かすこと
@@ -195,10 +193,6 @@ exit_this:
 }
 
 
-
-
-
-
 static pid_t current_mpv = 0;
 /*
  * 起動したmpvを終了する
@@ -308,13 +302,14 @@ char *mpvradio_ipc_send_and_response (char *message)
 
     // 送信
     message_len = strlen (message);
+    //~ g_message ("hoge %s",message);
     size = write (fd, message, message_len);
+
     if (size < message_len) {
         g_message ("failed to send data(errno:%d, error_str:%s)\n", errno, strerror(errno));
         close (fd);
         return NULL;
     }
-    //~ g_message (message);
 
     // レスポンスの受信
     for (;;) {
@@ -325,6 +320,7 @@ char *mpvradio_ipc_send_and_response (char *message)
             break;
         }
     }
+    //~ g_message ("Completed receiving response after sending.");
     retstr = g_strdup (readbuffer);
 
     // ソケットを閉じる

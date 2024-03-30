@@ -247,11 +247,11 @@ mpvradio_window_new (GtkApplication *application)
                                 G_CALLBACK(mpvradio_common_cb), mpvradio_common_stop);
     forwardbtn = gtk_button_new_from_icon_name ("media-skip-forward-symbolic",
                                                 GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT(stopbtn), "clicked",
+    g_signal_connect (G_OBJECT(forwardbtn), "clicked",
                                 G_CALLBACK(mpvradio_common_cb), mpvradio_common_next);
     backwardbtn = gtk_button_new_from_icon_name ("media-skip-backward-symbolic",
                                                 GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT(stopbtn), "clicked",
+    g_signal_connect (G_OBJECT(backwardbtn), "clicked",
                                 G_CALLBACK(mpvradio_common_cb), mpvradio_common_prev);
     header = gtk_header_bar_new ();
     gtk_header_bar_set_decoration_layout (GTK_HEADER_BAR (header), "menu:close");
