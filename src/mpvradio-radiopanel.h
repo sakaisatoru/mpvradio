@@ -1,1 +1,1 @@
-GtkWidget * mpvradio_radiopanel_new (void);
+GtkWidget *mpvradio_radiopanel_new (void);

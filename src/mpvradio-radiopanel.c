@@ -14,7 +14,8 @@ extern GHashTable *playlist_table, *playlist_logo_table;
 GHashTable *banner_logo_set_up (void)
 {
     GHashTable *bannertable;
-    gchar *name, **n, *cachedir, *logofile, *key;
+    const gchar *name;
+    gchar **n, *cachedir, *logofile, *key;
     GDir *d;
 
     cachedir = g_build_filename (g_get_user_cache_dir (), PACKAGE,

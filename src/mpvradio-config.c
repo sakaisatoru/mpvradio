@@ -79,6 +79,9 @@ GKeyFile *load_config_file (void)
             "volume=0.5\n" \
             "station=\n" \
             "\n"    \
+            "[mode]\n"    \
+            "allowkey_volume=false\n"    \
+            "\n"    \
             "[playlist]\n"   \
             "other="DATADIR"/mpvradio/playlists/radio.m3u\n" \
             "\n";

@@ -198,7 +198,7 @@ mpvradio_save_window_size (GtkWidget *widget)
 }
 
 static gboolean
-radiopanel_delete_event_cb (GtkWidget *widget, GdkEvent *event,
+mainwindow_delete_event_cb (GtkWidget *widget, GdkEvent *event,
                                                 gpointer app)
 {
     if (XAPP_IS_STATUS_ICON(appindicator)) {
@@ -212,8 +212,26 @@ radiopanel_delete_event_cb (GtkWidget *widget, GdkEvent *event,
     return FALSE;
 }
 
+static gboolean
+mainwindow_key_press_event_cb (GtkWidget *widget,
+                               GdkEvent  *event,
+                               gpointer   user_data)
+{
+    guint k = ((GdkEventKey*)event)->keyval;
+
+    if (k == GDK_KEY_Up) {
+        g_signal_emit_by_name (volume_up_button, "clicked", NULL);
+        return TRUE;
+    }
+    else if (k == GDK_KEY_Down) {
+        g_signal_emit_by_name (volume_down_button, "clicked", NULL);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 /*
- * 選局パネル(ウィンドウ)の作成
+ * メインウィンドウの作成
  */
 GtkWindow *
 mpvradio_window_new (GtkApplication *application)
@@ -230,7 +248,7 @@ mpvradio_window_new (GtkApplication *application)
     gtk_window_set_default_size (GTK_WINDOW(window), width, height);
     gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     g_signal_connect (G_OBJECT(window), "delete-event",
-                        G_CALLBACK(radiopanel_delete_event_cb), application);
+                        G_CALLBACK(mainwindow_delete_event_cb), application);
 
     // ボリュームボタン
     volbtn = gtk_volume_button_new ();
@@ -265,12 +283,12 @@ mpvradio_window_new (GtkApplication *application)
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), stopbtn);
     gtk_header_bar_pack_end (GTK_HEADER_BAR (header), backwardbtn);
 
-
     /* 情報表示用 */
     infotext = gtk_entry_new_with_buffer (infomessage);
     gtk_widget_set_can_focus (infotext, FALSE);
-    selectergrid = mpvradio_radiopanel_new ();
 
+    /* 選局パネル */
+    selectergrid = mpvradio_radiopanel_new ();
     scroll = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_kinetic_scrolling (GTK_SCROLLED_WINDOW (scroll), TRUE);
     gtk_scrolled_window_set_capture_button_press (GTK_SCROLLED_WINDOW (scroll), TRUE);
@@ -283,6 +301,13 @@ mpvradio_window_new (GtkApplication *application)
     gtk_box_pack_start (GTK_BOX(box), scroll, TRUE, TRUE, 0);
 
     gtk_container_add (GTK_CONTAINER(window), box);
+
+    // オプション
+    // 上下カーソルキーに音量調整を割り当てる
+    if (g_key_file_get_boolean (kconf, "mode", "allowkey_volume", NULL)) {
+        g_signal_connect (G_OBJECT(window), "key-press-event",
+                    G_CALLBACK(mainwindow_key_press_event_cb), NULL);
+    }
 
     return GTK_WINDOW(window);
 }
