@@ -78,7 +78,8 @@ gboolean mpvradio_common_check_mpv_is_play (void)
 void mpvradio_common_stop (void)
 {
     mpvradio_ipc_send ("{\"command\": [\"stop\"]}\x0a");
-    gtk_entry_buffer_set_text (infomessage, "",-1);
+    //~ gtk_entry_buffer_set_text (infomessage, "",-1);
+    gtk_entry_buffer_delete_text (infomessage, 0,-1);
     if (XAPP_IS_STATUS_ICON(appindicator)) {
         xapp_status_icon_set_label (appindicator,
                                 gtk_entry_buffer_get_text (infomessage));
