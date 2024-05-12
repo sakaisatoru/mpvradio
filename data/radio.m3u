@@ -7,12 +7,20 @@ mms://hdv.nkansai.tv/smile
 plugin:/afn.py/AFNP_TKO
 #EXTINF:-1,USA / AFN Gravity
 plugin:/afn.py/AFN_GRV
-#EXTINF:-1,USA / AFN Joe Radio
+#EXTINF:-1,USA / AFN Joe Radio(Pacific)
 plugin:/afn.py/AFN_JOEP
-#EXTINF:-1,USA / AFN Hot AC
+#EXTINF:-1,USA / AFN Joe Radio
+plugin:/afn.py/AFN_JOE
+#EXTINF:-1,USA / AFN Hot AC(Pacific)
 plugin:/afn.py/AFN_HOTP
+#EXTINF:-1,USA / AFN Hot AC
+plugin:/afn.py/AFN_HOT
 #EXTINF:-1,USA / AFN Legacy
 plugin:/afn.py/AFN_LGYP
+#EXTINF:-1,USA / AFN Freedom
+plugin:/afn.py/AFN_FRE
+#EXTINF:-1,USA / AFN Freedom(Pacific)
+plugin:/afn.py/AFN_FREP
 
 #EXTINF:-1,radioparadise.com(main mix) / radioparadaise.com(main mix)
 http://stream.radioparadise.com/aac-320
@@ -51,7 +59,5 @@ plugin:/radiko.py/JOAK
 plugin:/radiko.py/RN1
 #EXTINF:-1,Tokyo / ラジオNIKKEI第2
 plugin:/radiko.py/RN2
-#EXTINF:-1,Chiba / 放送大学
-plugin:/radiko.py/HOUSOU-DAIGAKU
 #EXTINF:-1,Tokyo / NHK-FM（東京）
 plugin:/radiko.py/JOAK-FM

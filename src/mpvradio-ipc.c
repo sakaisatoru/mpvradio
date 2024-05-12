@@ -324,7 +324,10 @@ char *mpvradio_ipc_send_and_response (char *message)
     retstr = g_strdup (readbuffer);
 
     // ソケットを閉じる
-    close (fd);
+    //~ close (fd);
+    if (shutdown (fd, 2)) {
+		g_message ("ソケットを閉じる時にエラー");
+	}
     return retstr;
 }
 

@@ -112,8 +112,8 @@ mpvradio_radiopanel_new (void)
     GList *playlist_sorted, *curr;
     int i = 0;
     playlist_sorted = g_hash_table_get_keys (playlist_table);
-    playlist_sorted = curr = g_list_sort (playlist_sorted, strcmp);
-    for (;curr != NULL;curr = g_list_next (curr)) {
+    playlist_sorted = g_list_sort (playlist_sorted, strcmp);
+    for (curr = playlist_sorted; curr != NULL; curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
 
