@@ -94,6 +94,7 @@ function on_media_title_change(name, value)
         --~ print(s)
     end
 end
-mp.observe_property("media-title", "string", on_media_title_change)
+--~ mp.observe_property("media-title", "string", on_media_title_change)
+mp.observe_property("metadata/by-key/icy-title", "string", on_media_title_change)
 
 
