@@ -30,6 +30,8 @@ http://stream.radioparadise.com/mellow-320
 http://stream.radioparadise.com/rock-320
 #EXTINF:-1,radioparadise.com(global mix) / radioparadaise.com(global mix)
 http://stream.radioparadise.com/global-320
+#EXTINF:-1,NHKラジオ第２ / NHKラジオ第２
+https://radio-stream.nhk.jp/hls/live/2023501/nhkradiruakr2/master48k.m3u8
 
 #EXTINF:-1,Tokyo / TBSラジオ
 plugin:/radiko.py/TBS
