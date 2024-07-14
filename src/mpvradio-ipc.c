@@ -216,20 +216,20 @@ void mpvradio_ipc_fork_mpv (void)
     int pfd[2];
 
     if (pipe(pfd) == -1) {
-        g_message ("パイプの作成に失敗");
+        g_message ("mpvradio_ipc_fork_mpv() : %s", strerror(errno));
         return;
     }
 
     pid = fork ();
     if (pid == -1) {
         // 失敗
-        g_message ("子プロセスの起動に失敗");
+        g_message ("mpvradio_ipc_fork_mpv() [first fork]: %s", strerror(errno));
     } else if (pid == 0) {
         // 子プロセス
         pid2 = fork ();
         if (pid2 == -1) {
             // 失敗
-            g_message ("孫プロセスの起動に失敗");
+			g_message ("mpvradio_ipc_fork_mpv() [second fork]: %s", strerror(errno));
         }
         else if (pid2 == 0) {
             // 孫プロセス
@@ -302,7 +302,6 @@ char *mpvradio_ipc_send_and_response (char *message)
 
     // 送信
     message_len = strlen (message);
-    //~ g_message ("hoge %s",message);
     size = write (fd, message, message_len);
 
     if (size < message_len) {
@@ -314,19 +313,17 @@ char *mpvradio_ipc_send_and_response (char *message)
     // レスポンスの受信
     for (;;) {
         size = read (fd, readbuffer, READ_BUFFER_SIZE-1);
-        //~ g_message (readbuffer);
         if (size < READ_BUFFER_SIZE-1) {
             readbuffer[size] = '\0';
             break;
         }
     }
-    //~ g_message ("Completed receiving response after sending.");
+    // Completed receiving response after sending.
     retstr = g_strdup (readbuffer);
 
     // ソケットを閉じる
-    //~ close (fd);
     if (shutdown (fd, 2)) {
-		g_message ("ソケットを閉じる時にエラー");
+		g_message ("mpvradio_ipc_send_and_response() : %s", strerror(errno));
 	}
     return retstr;
 }
@@ -348,7 +345,7 @@ int mpvradio_ipc_send (char *message)
     if (s == NULL) {
         return retval;
     }
-//~ g_message(s);
+
     JsonParser *parser = json_parser_new ();
     if (json_parser_load_from_data (parser, s, -1, &err) == FALSE) {
         g_error ("%s   exit mpvradio_ipc_send.",err->message);

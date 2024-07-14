@@ -31,6 +31,8 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <locale.h>
+#include <errno.h>
+#include <string.h>
 
 #include "glib/gi18n.h"
 #include "gtk/gtk.h"
@@ -180,16 +182,16 @@ mpvradio_read_playlist (void)
 								logofile = g_build_filename (cachedir, n, NULL);
 								g_free (n);
 								if (g_file_test (logofile, G_FILE_TEST_EXISTS) == FALSE) {
-									g_message ("%s : undetect logofile.", station);
+									g_message ("%s : undetect logo(banner)file.", station);
 									g_free (logofile);
 									// logoファイルが定義されていない場合は、プログラムアイコンで代替する
-									logofile = g_build_filename (cachedir, "mpvradio.png", NULL);
+									logofile = g_build_filename (cachedir, PACKAGE".png", NULL);
 								}
 							}
 							// logofile名 (banner) 登録
 							if (g_hash_table_contains (playlist_logo_table, station)) {
 								if (!g_hash_table_replace (playlist_logo_table, station, g_strdup (logofile))) {
-									g_warning ("duplicate station and logofile : %s", station);
+									g_warning ("duplicate station and logo(banner)file : %s", station);
 								}
 							}
 							else {
@@ -201,11 +203,10 @@ mpvradio_read_playlist (void)
                     }
                 }
             }
-            
             fclose (fp);
         }
         else {
-            g_message ("file not found. %s", *pl);
+            g_message ("mpvradio_read_playlist() : %s [%s]", strerror(errno), fn);
         }
         g_free (fn);
         pl++;
