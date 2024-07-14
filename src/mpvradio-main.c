@@ -76,9 +76,6 @@ extern void save_config_file (GKeyFile *);
 extern GKeyFile *load_config_file (void);
 extern XAppPreferencesWindow *mpvradio_config_prefernces_ui (void);
 
-extern GHashTable *banner_logo_set_up (void);
-
-
 typedef struct {
     gchar *playlist;
     gboolean version;
@@ -105,7 +102,9 @@ volume_value_change_cb (GtkScaleButton *button,
 
 
 /*
- * playlist の内容をハッシュテーブルに格納する
+ * playlist の内容をハッシュテーブルに格納する。同時にlogo画像ファイル名も得る。
+ * key : 局名
+ * value : URL(playlist_table), logo(playlist_logo_table)
  */
 GHashTable *playlist_table, *playlist_logo_table;
 
@@ -113,11 +112,17 @@ void
 mpvradio_read_playlist (void)
 {
     gchar buf[256], *pos, *station, **playlist, **pl, *fn;
+	gchar *cachedir;
     int i;
     gboolean flag = FALSE;
 
+    cachedir = g_build_filename (g_get_user_cache_dir (), PACKAGE,
+                                                            "logo",
+                                                            NULL);
+
     playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	playlist_logo_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
     pl = playlist;
     station = NULL;
@@ -152,6 +157,7 @@ mpvradio_read_playlist (void)
                         char *tail = strrchr (pos, '\n');
                         if (tail != NULL) *tail = '\0';
                         if (station != NULL) {
+							// URL登録
                             if (g_hash_table_contains (playlist_table, station)) {
                                 if (!g_hash_table_replace (playlist_table, station, g_strdup (pos))) {
                                     g_warning ("duplicate station and URL : %s", station);
@@ -160,11 +166,42 @@ mpvradio_read_playlist (void)
                             else {
                                 g_hash_table_insert (playlist_table, station, g_strdup (pos));
                             }
+
+							// 局名からlogoファイル名を作成
+							gchar *n = g_strdup_printf ("%s.png", station);
+							gchar *logofile = g_build_filename (cachedir, n, NULL);
+							g_free (n);
+							if (g_file_test (logofile, G_FILE_TEST_EXISTS) == FALSE) {
+								// 上記logoファイルが存在しない場合はURLからlogoファイル名を作成
+								gchar *bname = g_path_get_basename (pos);
+								gchar *n = g_strdup_printf("%s.png", bname);
+								g_free (bname);
+								g_free (logofile);
+								logofile = g_build_filename (cachedir, n, NULL);
+								g_free (n);
+								if (g_file_test (logofile, G_FILE_TEST_EXISTS) == FALSE) {
+									g_message ("%s : undetect logofile.", station);
+									g_free (logofile);
+									// logoファイルが定義されていない場合は、プログラムアイコンで代替する
+									logofile = g_build_filename (cachedir, "mpvradio.png", NULL);
+								}
+							}
+							// logofile名 (banner) 登録
+							if (g_hash_table_contains (playlist_logo_table, station)) {
+								if (!g_hash_table_replace (playlist_logo_table, station, g_strdup (logofile))) {
+									g_warning ("duplicate station and logofile : %s", station);
+								}
+							}
+							else {
+								g_hash_table_insert (playlist_logo_table, station, g_strdup (logofile));
+							}
+							g_free (logofile);
                         }
                         flag = FALSE;
                     }
                 }
             }
+            
             fclose (fp);
         }
         else {
@@ -174,6 +211,7 @@ mpvradio_read_playlist (void)
         pl++;
     }
     g_strfreev (playlist);
+    g_free (cachedir);
 }
 
 
@@ -462,7 +500,6 @@ g_message ("startup.");
 
     /* ラジオ局一覧 (playlist)の読み込み */
     mpvradio_read_playlist ();
-    playlist_logo_table = banner_logo_set_up ();
 
     /* ipc サーバを動かす */
     g_thread_new ("mpvradio", mpvradio_ipc_recv, NULL);

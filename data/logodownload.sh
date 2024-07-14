@@ -4,14 +4,9 @@ mkdir -p $target
 cd $target
 
 wget --output-document="radioparadaise.com(main mix)".png https://radioparadise.com/rpassets/images/logo/logo_2022_nav_244x64.svg
-cp "radioparadaise.com(main mix)".png "radioparadaise.com(mellow  mix)".png
+cp "radioparadaise.com(main mix)".png "radioparadaise.com(mellow mix)".png
 cp "radioparadaise.com(main mix)".png "radioparadaise.com(rock mix)".png
 cp "radioparadaise.com(main mix)".png "radioparadaise.com(global mix)".png
-#~ wget --output-document=mellow-320.png https://radioparadise.com/rpassets/images/logo/logo_2022_nav_244x64.svg
-#~ wget --output-document=rock-320.png https://radioparadise.com/rpassets/images/logo/logo_2022_nav_244x64.svg
-#~ wget --output-document=global-320.png https://radioparadise.com/rpassets/images/logo/logo_2022_nav_244x64.svg
-
-#~ wget --output-document=smile.png https://775fm.co.jp/wp/wp-content/themes/775fm/images/logo.png
 wget --output-document="スマイルラジオ.png" https://775fm.co.jp/wp/wp-content/themes/775fm/images/logo.png
 
 wget --output-document="AFN TOKYO".png https://pacific.afn.mil/portals/101/Images/AFNgo_tile.png
@@ -23,14 +18,7 @@ cp "AFN TOKYO.png" "AFN Hot AC.png"
 cp "AFN TOKYO.png" "AFN Legacy.png"
 cp "AFN TOKYO.png" "AFN Freedom.png"
 cp "AFN TOKYO.png" "AFN Freedom(Pacific).png"
-#~ wget --output-document=AFN_GRV.png https://pacific.afn.mil/portals/101/Images/AFNgo_tile.png
-#~ wget --output-document=AFNP_TKO.png https://pacific.afn.mil/portals/101/Images/AFNgo_tile.png
-
 
 wget --output-document=NHKラジオ第２.svg https://www.nhk.or.jp/radio/assets/img/badge_r2.svg
 
-#~ IFS_BACK="$IFS"
-#~ IFS=$'\n'
 for i in `cat /usr/local/share/mpvradio/playlists/radio.m3u|grep "plugin"|cut -d"/" -f3`;do wget --output-document=$i.png "https://radiko.jp/station/logo/$i/logo_large.png";done
-#~ for i in `cat /usr/local/share/mpvradio/playlists/radio.m3u|grep "#EXTINF"|cut -d"/" -f2|sed 's/^ //'`;do wget --output-document=$i.png "https://radiko.jp/station/logo/$i/logo_large.png";done
-#~ IFS="$IFS_BACK"

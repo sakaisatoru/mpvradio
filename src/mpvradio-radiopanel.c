@@ -9,34 +9,6 @@
 extern GHashTable *playlist_table, *playlist_logo_table;
 
 /*
- * キャッシュディレクトリをチェックしてlogo(ファイル名)を得る
- */
-GHashTable *banner_logo_set_up (void)
-{
-    GHashTable *bannertable;
-    const gchar *name;
-    gchar **n, *cachedir, *logofile, *key;
-    GDir *d;
-
-    cachedir = g_build_filename (g_get_user_cache_dir (), PACKAGE,
-                                                            "logo",
-                                                            NULL);
-    bannertable = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-    if ((d = g_dir_open (cachedir, 0, NULL)) != NULL) {
-        while ((name = g_dir_read_name (d)) != NULL) {
-            n = g_strsplit (name, ".", 0);
-            key = g_strdup (n[0]); g_strfreev (n);
-            logofile = g_build_filename (cachedir, name, NULL);
-            g_hash_table_replace (bannertable, key, logofile);
-        }
-        g_dir_close (d);
-    }
-    g_free (cachedir);
-    return bannertable;
-}
-
-
-/*
  * flow_box の選択された要素上で何か起きた
  */
 static gboolean child_selected_change = FALSE;
@@ -80,7 +52,6 @@ selected_children_changed_cb (GtkFlowBox      *box,
     child_selected_change = TRUE;
 }
 
-
 /*
  * 選局ボタンを並べたgtk_flow_boxを返す
  */
@@ -89,7 +60,6 @@ mpvradio_radiopanel_new (void)
 {
     GtkWidget *btn, *grid;
     gpointer station, url, banner;
-    gchar *st, **st0;
 
     grid = gtk_flow_box_new ();
     gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(grid),GTK_SELECTION_SINGLE);
@@ -110,21 +80,12 @@ mpvradio_radiopanel_new (void)
      * playlist_table をチェックして選局ボタンを並べる
      */
     GList *playlist_sorted, *curr;
-    int i = 0;
     playlist_sorted = g_hash_table_get_keys (playlist_table);
     playlist_sorted = g_list_sort (playlist_sorted, strcmp);
     for (curr = playlist_sorted; curr != NULL; curr = g_list_next (curr)) {
         if (curr->data != NULL) {
             url = g_hash_table_lookup (playlist_table, curr->data);
-
-            // urlの末尾をキーにしてlogoのファイル名を得る
-            st = g_path_get_basename (url);
-            st0 = g_strsplit (st, ".", 0);
-
-            banner = g_hash_table_lookup (playlist_logo_table, st0[0]);
-
-            g_strfreev (st0);
-            g_free (st);
+            banner = g_hash_table_lookup (playlist_logo_table, curr->data);
 
             btn = mpvradio_banner_new_with_data (GTK_ORIENTATION_VERTICAL, 16,
                             curr->data, (gchar*)url, (gchar*)banner);

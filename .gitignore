@@ -1,5 +1,6 @@
 # http://www.gnu.org/software/automake
 src/mpvradio
+/configure~
 
 Makefile.in
 /Makefile.in

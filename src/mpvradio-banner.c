@@ -71,21 +71,22 @@ mpvradio_banner_new_with_data (GtkOrientation orientation, gint spacing,
     mpvradio_banner_set_url (self, url);
     mpvradio_banner_set_banner (self, banner);
 
-    //~ GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (banner, NULL);
-    //~ GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size (banner, -1, 64, NULL);
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size (banner, 216, -1, NULL);// radiko各局のバナーのwidthが216
-    if (pixbuf == NULL) {
-		gchar *path = g_path_get_dirname (banner);
-		gchar *n    = g_strdup_printf ("%s.png", name);
-		gchar *tmp  = g_build_filename (path, n, NULL);
-		g_message("debug : banner=%s path=%s   name=%s",banner, path, n);
-		pixbuf = gdk_pixbuf_new_from_file_at_size (tmp, 216, -1, NULL);
-		g_free (tmp);
-		g_free (n);
-		g_free (path);
-    }
-    self->image = gtk_image_new_from_pixbuf (pixbuf);
-    g_object_unref (pixbuf);
+	gint width = -1, height = -1;
+	GdkPixbufFormat *bf = gdk_pixbuf_get_file_info (banner, &width, &height);
+	if (bf != NULL) {
+		if (width > 200) width = 200;
+		if (height > 64) height = 64;
+	}
+
+	
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size (banner, width, height, NULL);
+    if (pixbuf != NULL) {
+		self->image = gtk_image_new_from_pixbuf (pixbuf);
+		g_object_unref (pixbuf);
+	}
+	else {
+		self->image = gtk_image_new_from_icon_name ("image-missing", GTK_ICON_SIZE_DIALOG);
+	}
 
     self->label = gtk_label_new (name);
     gtk_label_set_width_chars (GTK_LABEL(self->label), 10);
