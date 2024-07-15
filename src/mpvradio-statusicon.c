@@ -103,9 +103,9 @@ static void
 _mpvradio_statusicon_menuitem_cb (GtkWidget *menuitem,
                                                 gpointer data)
 {
-    char *url = g_hash_table_lookup (playlist_table,
-                        gtk_menu_item_get_label (menuitem));
-    mpvradio_common_mpv_play ((gpointer)url);
+	gchar **v = (gchar **)g_hash_table_lookup (playlist_table, 
+								gtk_menu_item_get_label (menuitem));
+    mpvradio_common_mpv_play ((gpointer)v[0]);
 }
 
 
@@ -144,7 +144,6 @@ mpvradio_statusicon_button_release_event_cb (XAppStatusIcon *icon,
         playlist_sorted = curr = g_list_sort (playlist_sorted, strcmp);
         while (curr != NULL) {
             if (curr->data != NULL) {
-                url = g_hash_table_lookup (playlist_table, curr->data);
                 menuitem = gtk_menu_item_new_with_label (curr->data);
                 g_signal_connect (menuitem, "activate",
                     G_CALLBACK (_mpvradio_statusicon_menuitem_cb), NULL);
