@@ -105,7 +105,7 @@ gchar *mpvradio_adduri_quicktune (GtkWindow *oya)
                 return str;
             }
             else {
-                g_warning (_("Null strings are not added."));
+                g_warning (_("mpvradio_adduri_quicktune() : Null strings are not added."));
             }
             g_free (str);
             break;

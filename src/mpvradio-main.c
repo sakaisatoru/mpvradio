@@ -122,11 +122,10 @@ mpvradio_read_playlist (void)
                                                             "logo",
                                                             NULL);
 
-    playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	playlist_logo_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-    pl = playlist;
+	
+    pl = playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     station = NULL;
     while (*pl != NULL) {
         fn = g_key_file_get_value (kconf, "playlist", *pl, NULL);
@@ -162,7 +161,7 @@ mpvradio_read_playlist (void)
 							// URL登録
                             if (g_hash_table_contains (playlist_table, station)) {
                                 if (!g_hash_table_replace (playlist_table, station, g_strdup (pos))) {
-                                    g_warning ("duplicate station and URL : %s", station);
+                                    g_message ("duplicate station and URL : %s", station);
                                 }
                             }
                             else {
@@ -191,7 +190,7 @@ mpvradio_read_playlist (void)
 							// logofile名 (banner) 登録
 							if (g_hash_table_contains (playlist_logo_table, station)) {
 								if (!g_hash_table_replace (playlist_logo_table, station, g_strdup (logofile))) {
-									g_warning ("duplicate station and logo(banner)file : %s", station);
+									g_message ("duplicate station and logo(banner)file : %s", station);
 								}
 							}
 							else {

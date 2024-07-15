@@ -47,7 +47,7 @@ void save_config_file (GKeyFile *kf)
 
     if (g_key_file_save_to_file (kf, conf_file_name, &err) == FALSE) {
         /* 設定ファイルの保存に失敗しました。*/
-        g_warning ("%s : (save_config_file)", err->message);
+        g_warning ("save_config_file() : %s", err->message);
         g_clear_error (&err);
     }
     g_free (conf_file_name);
@@ -93,7 +93,7 @@ GKeyFile *load_config_file (void)
         g_mkdir (dir, S_IRWXU);
         g_free (dir);
         if (g_key_file_save_to_file (kf, conf_file_name, &err) == FALSE) {
-            g_warning ("%s : (load_config_file)", err->message);
+            g_warning ("load_config_file() : %s", err->message);
             g_clear_error (&err);
         }
     }

@@ -114,7 +114,7 @@ gpointer mpvradio_ipc_recv (gpointer n)
     // UNIXドメインのソケットを作成
     ipc_recv_fd = socket (AF_UNIX, SOCK_STREAM, 0);
     if (ipc_recv_fd == -1) {
-        g_error ("failed to socket(errno:%d, error_str:%s)\n", errno, strerror(errno));
+		g_error ("mpvradio_ipc_recv() : %s)", strerror(errno));
         g_thread_exit (NULL);
     }
 
@@ -125,7 +125,7 @@ gpointer mpvradio_ipc_recv (gpointer n)
     // 上記設定をソケットに紐づける
     ret = bind (ipc_recv_fd, (const struct sockaddr *)&sun, sizeof(sun));
     if (ret == -1) {
-        g_error ("failed to bind(errno:%d, error_str:%s)\n", errno, strerror(errno));
+		g_error ("mpvradio_ipc_recv() : %s)", strerror(errno));
         close (ipc_recv_fd);
         g_thread_exit (NULL);
     }
@@ -133,7 +133,7 @@ gpointer mpvradio_ipc_recv (gpointer n)
     // ソケットに接続待ちを設定する。
     ret = listen (ipc_recv_fd, 3);
     if (ret == -1) {
-        g_error ("failed to listen(errno:%d, error_str:%s)\n", errno, strerror(errno));
+		g_error ("mpvradio_ipc_recv() : %s)", strerror(errno));
         close (ipc_recv_fd);
         ipc_recv_fd = -1;
         g_thread_exit (NULL);
@@ -144,7 +144,7 @@ gpointer mpvradio_ipc_recv (gpointer n)
 
         fd = accept (ipc_recv_fd, (struct sockaddr *)&sun_client, &socklen);
         if (fd == -1) {
-            printf("failed to accept(errno:%d, error_str:%s)\n", errno, strerror(errno));
+            g_message ("mpvradio_ipc_recv() : %s)", strerror(errno));
             continue;
         }
 
@@ -200,7 +200,7 @@ static pid_t current_mpv = 0;
 void mpvradio_ipc_kill_mpv (void)
 {
     if (current_mpv) {
-        g_message ("kill %d", current_mpv);
+        g_message ("kill mpv (pid:%d)", current_mpv);
         kill (current_mpv, SIGTERM);
     }
 }
@@ -284,7 +284,7 @@ char *mpvradio_ipc_send_and_response (char *message)
     // UNIXドメインのソケットを作成
     fd = socket (AF_LOCAL, SOCK_STREAM, 0);
     if (fd == -1) {
-        g_message ("failed to create_socket(errno=%d:%s)\n", errno, strerror (errno));
+        g_message ("mpvradio_ipc_send_and_response() : %s", strerror (errno));
         return NULL;
     }
 
@@ -295,7 +295,7 @@ char *mpvradio_ipc_send_and_response (char *message)
     // サーバーに接続
     ret_code = connect(fd, (const struct sockaddr *)&sun, sizeof(sun));
     if (ret_code == -1) {
-        g_message ("failed to connect_socket(errno:%d, error_str:%s)\n", errno, strerror(errno));
+        g_message ("mpvradio_ipc_send_and_response() : %s", strerror (errno));
         close (fd);
         return NULL;
     }
@@ -305,7 +305,7 @@ char *mpvradio_ipc_send_and_response (char *message)
     size = write (fd, message, message_len);
 
     if (size < message_len) {
-        g_message ("failed to send data(errno:%d, error_str:%s)\n", errno, strerror(errno));
+        g_message ("mpvradio_ipc_send_and_response() : %s", strerror (errno));
         close (fd);
         return NULL;
     }
@@ -348,7 +348,7 @@ int mpvradio_ipc_send (char *message)
 
     JsonParser *parser = json_parser_new ();
     if (json_parser_load_from_data (parser, s, -1, &err) == FALSE) {
-        g_error ("%s   exit mpvradio_ipc_send.",err->message);
+        g_error ("mpvradio_ipc_send() : %s", err->message);
         goto exit_this;
     }
 
