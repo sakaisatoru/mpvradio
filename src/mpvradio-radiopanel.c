@@ -6,7 +6,7 @@
 #include "mpvradio-common.h"
 #include "mpvradio-banner.h"
 
-extern GHashTable *playlist_table, *playlist_logo_table;
+extern GHashTable *playlist_table; 
 
 /*
  * flow_box の選択された要素上で何か起きた
@@ -76,17 +76,15 @@ mpvradio_radiopanel_new (void)
     g_signal_connect (G_OBJECT(grid), "selected-children-changed",
                 G_CALLBACK(selected_children_changed_cb), NULL);
 
-    /*
-     * playlist_table をチェックして選局ボタンを並べる
-     */
+    // playlist_table をチェックして選局ボタンを並べる
     GList *playlist_sorted, *curr;
     playlist_sorted = g_hash_table_get_keys (playlist_table);
     playlist_sorted = g_list_sort (playlist_sorted, strcmp);
     for (curr = playlist_sorted; curr != NULL; curr = g_list_next (curr)) {
         if (curr->data != NULL) {
-            url = g_hash_table_lookup (playlist_table, curr->data);
-            banner = g_hash_table_lookup (playlist_logo_table, curr->data);
-
+            gchar **v = (gchar **)g_hash_table_lookup (playlist_table, curr->data);
+            url = v[0];
+            banner = v[1];
             btn = mpvradio_banner_new_with_data (GTK_ORIENTATION_VERTICAL, 16,
                             curr->data, (gchar*)url, (gchar*)banner);
             gtk_flow_box_insert (GTK_FLOW_BOX(grid), btn, -1);

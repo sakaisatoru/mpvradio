@@ -243,7 +243,7 @@ void mpvradio_ipc_fork_mpv (void)
             close (pfd[0]);
             write (pfd[1], &pid2, sizeof(pid2));
             close (pfd[1]);
-            g_message ( "pid send : %d", pid2);
+            g_message ( "mpvradio_ipc_fork_mpv() : pid send[%d]", pid2);
             exit (0);
         }
     }
@@ -253,9 +253,8 @@ void mpvradio_ipc_fork_mpv (void)
         read (pfd[0], &current_mpv, sizeof(current_mpv));
         close (pfd[0]);
         waitpid (pid, &status, 0);
-        g_message ("pid recv : %d", current_mpv);
+        g_message ("mpvradio_ipc_fork_mpv() : pid recv[%d]", current_mpv);
     }
-    sleep (1);  // 直後のsocket通信でセグるので安定のために時間稼ぎする。
 }
 
 /*
@@ -293,11 +292,17 @@ char *mpvradio_ipc_send_and_response (char *message)
     strcpy(sun.sun_path, MPV_SOCKET_PATH);
 
     // サーバーに接続
-    ret_code = connect(fd, (const struct sockaddr *)&sun, sizeof(sun));
-    if (ret_code == -1) {
-        g_message ("mpvradio_ipc_send_and_response() : %s", strerror (errno));
-        close (fd);
-        return NULL;
+	ret_code = -1;
+    for (int i = 10; i > 0; i--) {
+		ret_code = connect(fd, (const struct sockaddr *)&sun, sizeof(sun));
+		if (ret_code != -1) break;
+		g_message ("mpvradio_ipc_send_and_response() : 接続待機中 残り%d秒",i);
+		sleep(1);
+    }
+	if (ret_code == -1) {
+		g_message ("mpvradio_ipc_send_and_response() : %s", strerror (errno));
+		close (fd);
+		return NULL;
     }
 
     // 送信

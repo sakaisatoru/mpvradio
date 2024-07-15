@@ -106,15 +106,16 @@ volume_value_change_cb (GtkScaleButton *button,
 /*
  * playlist の内容をハッシュテーブルに格納する。同時にlogo画像ファイル名も得る。
  * key : 局名
- * value : URL(playlist_table), logo(playlist_logo_table)
+ * value : URL, logo(banner)filename
  */
-GHashTable *playlist_table, *playlist_logo_table;
+GHashTable *playlist_table; 
 
 void
 mpvradio_read_playlist (void)
 {
     gchar buf[256], *pos, *station, **playlist, **pl, *fn;
 	gchar *cachedir;
+	char *tail;
     int i;
     gboolean flag = FALSE;
 
@@ -122,8 +123,8 @@ mpvradio_read_playlist (void)
                                                             "logo",
                                                             NULL);
 
-    playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-	playlist_logo_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+    playlist_table = g_hash_table_new_full (g_str_hash, g_str_equal, 
+													g_free, g_strfreev);
 	
     pl = playlist = g_key_file_get_keys (kconf, "playlist", NULL, NULL);
     station = NULL;
@@ -132,16 +133,14 @@ mpvradio_read_playlist (void)
         FILE *fp = fopen (fn, "rt");
         if (fp != NULL) {
             while (fgets (buf, sizeof(buf)-1, fp)) {
-                pos = g_strchug (buf);
+				if ((tail = strrchr (buf, '\n')) != NULL) *tail = '\0';
+                pos = g_strstrip (buf);
 
                 // Extended M3U
-                if (sscanf (pos, "#EXTINF:%d,%*[A-Za-z0-9()_. ] / %*s\n", &i)) {
+                if (sscanf (pos, "#EXTINF:%d,%*[A-Za-z0-9()_. ] / %*s", &i)) {
                     char *st = strrchr (pos, '/');
                     if (st != NULL) {
-                        st++;
-                        while (*st == ' ' || *st == '\t') st++;
-                        char *tail = strrchr (st, '\n');
-                        if (tail != NULL) *tail = '\0';
+                        st = g_strstrip (++st);
                         station = g_strdup (st);
                         flag = TRUE;
                     }
@@ -153,53 +152,44 @@ mpvradio_read_playlist (void)
                 }
 
                 if (flag == TRUE) {
-                    // 直前に #EXTINFがあれば URLとして読み込む
-                    if (*pos != '#') {  // コメント避け
-                        char *tail = strrchr (pos, '\n');
-                        if (tail != NULL) *tail = '\0';
-                        if (station != NULL) {
-							// URL登録
-                            if (g_hash_table_contains (playlist_table, station)) {
-                                if (!g_hash_table_replace (playlist_table, station, g_strdup (pos))) {
-                                    g_message ("duplicate station and URL : %s", station);
-                                }
-                            }
-                            else {
-                                g_hash_table_insert (playlist_table, station, g_strdup (pos));
-                            }
-
-							// 局名からlogoファイル名を作成
-							gchar *n = g_strdup_printf ("%s.png", station);
-							gchar *logofile = g_build_filename (cachedir, n, NULL);
-							g_free (n);
-							if (g_file_test (logofile, G_FILE_TEST_EXISTS) == FALSE) {
-								// 上記logoファイルが存在しない場合はURLからlogoファイル名を作成
-								gchar *bname = g_path_get_basename (pos);
-								gchar *n = g_strdup_printf("%s.png", bname);
-								g_free (bname);
-								g_free (logofile);
-								logofile = g_build_filename (cachedir, n, NULL);
-								g_free (n);
-								if (g_file_test (logofile, G_FILE_TEST_EXISTS) == FALSE) {
-									g_message ("%s : undetect logo(banner)file.", station);
-									g_free (logofile);
-									// logoファイルが定義されていない場合は、プログラムアイコンで代替する
-									logofile = g_build_filename (cachedir, PACKAGE".png", NULL);
-								}
-							}
-							// logofile名 (banner) 登録
-							if (g_hash_table_contains (playlist_logo_table, station)) {
-								if (!g_hash_table_replace (playlist_logo_table, station, g_strdup (logofile))) {
-									g_message ("duplicate station and logo(banner)file : %s", station);
-								}
-							}
-							else {
-								g_hash_table_insert (playlist_logo_table, station, g_strdup (logofile));
-							}
+                    if (*pos == '#') continue;  // コメント避け
+                    // 直前に #EXTINFがあれば URLとして読み込んで登録する。
+                    // すでに同じ局があれば上書きされる。
+                    
+					// 局名からlogoファイル名を作成
+					gchar *n = g_strdup_printf ("%s.png", station);
+					gchar *logofile = g_build_filename (cachedir, n, NULL);
+					g_free (n);
+					if (g_file_test (logofile, G_FILE_TEST_EXISTS) == FALSE) {
+						// 上記logoファイルが存在しない場合はURLからlogoファイル名を作成
+						gchar *bname = g_path_get_basename (pos);
+						gchar *n = g_strdup_printf ("%s.png", bname);
+						g_free (bname);
+						g_free (logofile);
+						logofile = g_build_filename (cachedir, n, NULL);
+						g_free (n);
+						if (g_file_test (logofile, G_FILE_TEST_EXISTS) == FALSE) {
+							g_message ("%s : undetect logo(banner)file.", station);
 							g_free (logofile);
-                        }
-                        flag = FALSE;
-                    }
+							// logoファイルが定義されていない場合は、プログラムアイコンで代替する
+							logofile = g_build_filename (cachedir, PACKAGE".png", NULL);
+						}
+					}
+
+					gchar **value = g_try_malloc (sizeof(gchar *[3]));
+					if (value != NULL) {
+						value[0] = g_strdup (pos);
+						value[1] = g_strdup (logofile);
+						value[2] = NULL;
+						g_hash_table_insert (playlist_table, g_strdup (station), value);
+					}
+					else {
+						g_error ("mpvradio_read_playlist() : g_try_malloc returned NULL (Out of memory).");
+					}
+					g_free (logofile);
+					g_free (station);
+
+					flag = FALSE;
                 }
             }
             fclose (fp);
@@ -509,8 +499,6 @@ g_message ("startup.");
 }
 
 
-
-
 static void
 mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
 {
@@ -536,16 +524,15 @@ mpvradio_shutdown_cb (GtkApplication *app, gpointer data)
         }
         windows = g_list_next(windows);
     }
+    g_object_unref (infomessage);
 
     save_config_file (kconf);
     detach_config_file (kconf);
 
     mpvradio_ipc_kill_mpv ();
     mpvradio_ipc_remove_socket ();
-    g_object_unref (infomessage);
 
     g_hash_table_destroy (playlist_table);
-    g_hash_table_destroy (playlist_logo_table);
 
     g_message ("shutdown now.");
 }
